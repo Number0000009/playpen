@@ -103,6 +103,7 @@ ok:
 	bl writeln
 
 	tlbi vmalle1
+	dsb nsh
 
 	mrs x0, tcr_el1
 	orr x0, x0, #(1 << 23)	// set EPD1 - disable page tables walk
@@ -113,6 +114,7 @@ ok:
 
 	ldr x0, =LOOPHOLE_CODE_VA
 	tlbi vae1, x0		// by VA
+	dsb nsh
 	isb
 
 	mov x28, x0
@@ -308,6 +310,7 @@ setup_mmu:
 	msr tcr_el1, x0
 
 	tlbi vmalle1
+	dsb nsh
 
 	mrs x0, sctlr_el1
 	orr x0, x0, #1				// set M-bit

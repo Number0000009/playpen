@@ -86,6 +86,7 @@ setup_mmu:
 	msr	tcr_el1, x0
 
 	tlbi	vmalle1
+	dsb	nsh
 
 	mrs	x0, sctlr_el1
 	orr	x0, x0, #1		// set M-bit
