@@ -1,4 +1,4 @@
-# A minimal baremetal test that executes some code in [Redacted].
+# A minimal baremetal test that executes some code in EL0 [Redacted].
 
 ## Plan
 Initialise a minimal set of pages that is sufficient for entering and executing some code in [redacted].
