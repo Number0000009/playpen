@@ -266,14 +266,14 @@ setup_mmu:
 	str x3, [x0]
 
 // data
-// RDT page
+// ZT page
 	add x3, x1, #(DESCRIPTOR_SIZE * ((T1_LOOPHOLE_DATA - T1_AS_START) / TR_BLOCK_SIZE))
 	ldr x2, =(T1_LOOPHOLE_DATA | 0x711)
 	str x2, [x3]
 	orr x3, x3, #TYPE_TABLE
 	str x3, [x0]
 
-// RD page
+// Z page
 	add x3, x1, #(DESCRIPTOR_SIZE * ((T1_LOOPHOLE_DATA+TR_BLOCK_SIZE - T1_AS_START) / TR_BLOCK_SIZE))
 	ldr x2, =(T1_LOOPHOLE_DATA+TR_BLOCK_SIZE | 0x711)
 	str x2, [x3]
