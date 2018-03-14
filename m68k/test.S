@@ -24,7 +24,7 @@ puts:
 	movea.l #PUTCH,a1
 puts_cont:
 	cmpi.b #0,(a0)
-	beq puts_exit
+	beqs puts_exit
 	move.b (a0)+,(a1)
 	bras puts_cont
 puts_exit:
@@ -45,7 +45,7 @@ putx_cont:
 	lsr.b #4,d2
 	addi.b #'0',d2
 	cmpi.b #$a+'0',d2
-	blo putx_l1
+	blos putx_l1
 	addi.b #('a'-10-'0'),d2
 putx_l1:
 	move.b d2,(a1)
@@ -53,7 +53,7 @@ putx_l1:
 	andi.b #$0F,d2
 	addi.b #'0',d2
 	cmpi.b #$a+'0',d2
-	blo putx_l2
+	blos putx_l2
 	addi.b #('a'-10-'0'),d2
 putx_l2:
 	move.b d2,(a1)
