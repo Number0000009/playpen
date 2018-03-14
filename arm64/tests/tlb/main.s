@@ -353,14 +353,6 @@ flush_by_va_i:
 	.asciz "Flushing by VA iTLB...\r\n"
 flush_by_va_d:
 	.asciz "Flushing by VA dTLB...\r\n"
-flush_by_pa_i:
-	.asciz "Flushing by PA iTLB...\r\n"
-flush_by_pa_d:
-	.asciz "Flushing by PA dTLB...\r\n"
-flush_by_irid_i:
-	.asciz "Flushing by irid iTLB...\r\n"
-flush_by_irid_d:
-	.asciz "Flushing by irid dTLB...\r\n"
 
 trans_i_ok:
 	.asciz "Translating by iTLB (should pass)...\r\n"
