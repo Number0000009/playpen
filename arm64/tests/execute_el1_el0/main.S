@@ -54,7 +54,7 @@ copy_redacted_code:
 
 // --- Enter into a [Redacted] ---
 
-	ldr	x0, =(LOOPHOLE_CODE_SRC_VA - 16)
+	ldr	x0, =LOOPHOLE_CODE_SRC_VA
 	msr	elr_el1, x0
 
 	ldr	x0, =(continue)
