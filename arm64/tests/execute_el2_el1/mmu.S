@@ -74,7 +74,7 @@ setup_mmu:
 	str	x2, [x3]
 
 	tlbi	alle2
-	dsb	nsh
+	dsb	sy
 
 // setup VTTBR_EL2
 	adr	x0, el2_l1_vt0table
@@ -174,7 +174,7 @@ setup_mmu:
 	msr	hcr_el2, x0
 
 	tlbi	vmalls12e1
-	dsb	nsh
+	dsb	sy
 
 	mrs	x0, sctlr_el1
 	orr	x0, x0, #1		// set M-bit
