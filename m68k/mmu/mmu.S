@@ -48,7 +48,7 @@
 	long	mmu		; Level 7
 
 	; Traps (32-47)
-	long	bomb		; Trap 0
+	long	trap0		; Trap 0
 	long 	bomb		; Trap 1
 	long	bomb		; Trap 2
 	long	bomb		; Trap 3
@@ -291,20 +291,36 @@ MMUROOT equ $00F02010
 	move.w #$000A,MMUROOT
 	move.w #$000B,MMUMASK
 
+	movea.l #code_end,a0
+	add.l #$A000,a0
+	move.l #$11223344,(a0)
+
 ; Relocate code
 	movea.l #code,a0
-	movea.l #$A424,a1
+	move.l a0,a1
+	add.l #$A000,a1
 	move.l (a0)+,(a1)+
 	move.l (a0)+,(a1)+
 
 	and.w #$D8FF,sr		; unmask all IRQs and switch to User Mode
-; at this point VA is $Axxx | current PC (i.e. $0000A424, MASK $0000B000)
-; PC now is $A424
+
+; at this point PA is ($A000 + current PC) i.e. $0000A438
+; MASK is (BASE + Segment_Size)
+; VA(PC) is $438, PA(PC) is $A438
+
+; Weird MMU, isn't it? Works kinda backwards as of the conventional MMU
+; What it really does - just adds up BASE to a virtual address and
+; checks lower boundary as (BASE + addr) < (BASE + addr + MASK)
+
+; So at this point we're executing @ $A438
+; Wanna ensure? Patch $A438 with #$60fe (bras to itself)
+
 code:
-	nop			; Nops are necessary, otherwise
-	nop			; branch won't be getting fetched on each
-	bras code		; iteration, as it's in the loop buffer already
-	nop
+	move.l (code_end),d0	; same as code_end + $A000
+	trap #0
+	bras .
+code_end:
+	long $42424242
 
 ; --- Handlers ---
 timer:
@@ -319,6 +335,32 @@ mmu:
 	cmp.w MMUFAULT,a0	; ACK
 	movea.l #mmu_msg,a0
 	bsrs puts
+	rte
+
+trap0:
+	move.l d0,d7
+	movea.l #trap0_msg,a0
+	bsrs puts
+
+	move.w (sp)+,d6		; offset word
+	move.l (sp)+,d0		; return addr
+	move.w (sp)+,d5		; SR
+
+	sub.l #$2,d0
+	bsrs putx		; faulted insn addr
+
+;	move.l d6,d0
+;	bsrs putx		; offset word
+
+;	move.l d5,d0
+;	bsrs putx		; SR
+
+	movea.l #trap0_arg_msg,a0
+	bsrs puts
+
+	move.l d7,d0
+	bsrs putx		; arg
+
 	rte
 
 bomb:
@@ -386,6 +428,12 @@ timer_msg:
 
 mmu_msg:
 	asciz "\nMMU IRQ7\n"
+
+trap0_msg:
+	asciz "\nTRAP #0 from "
+
+trap0_arg_msg:
+	asciz "\nTRAP #0 D0="
 
 bomb_msg:
 	asciz "\nUnhandled IRQ\n"
