@@ -26,7 +26,7 @@
 	long	bomb		; uninitialized interrupt vector
 
 	; Reserved (16-23)
-	long	bomb		; spare 16 
+	long	bomb		; spare 16
 	long	bomb		; spare 17
 	long	bomb		; spare 18
 	long	bomb		; spare 19
