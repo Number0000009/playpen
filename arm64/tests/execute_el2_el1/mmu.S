@@ -174,7 +174,8 @@ setup_mmu:
 	msr	hcr_el2, x0
 
 	tlbi	vmalls12e1
-	dsb	sy
+	dsb	nsh
+	isb
 
 	mrs	x0, sctlr_el1
 	orr	x0, x0, #1		// set M-bit
