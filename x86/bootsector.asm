@@ -28,9 +28,6 @@ _start:
 		cld
 
 
-
-
-
 ;		mov ax, 0x0003
 ;		int 0x10
 
@@ -57,82 +54,78 @@ _start:
 ;		and al, 0xFE
 ;		out 0x92, al
 a20_after:
+; Enable A20 Gate
+;	in al, 0x92
+;	or al, 0x02
+;	out 0x92, al
 
-        ; Enable A20 Gate
-;        in al, 0x92
-;        or al, 0x02
-;        out 0x92, al
+	xor ax, ax
 
-    xor ax, ax
+; set up segment registers
+	mov ss, ax
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+; set up stack so that it starts below 'main'
+	mov sp, main
+	cld
 
-    ; Set up segment registers.
-    mov ss, ax
-    ; Set up stack so that it starts below Main.
-    mov sp, main
+	; Zero out the 16KiB buffer
+	; Since we are doing a rep stosd, count should be bytes/4
 
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    cld
+%define FREE_SPACE 0x9000
+	mov edi, FREE_SPACE
 
-
-
-    ; Zero out the 16KiB buffer.
-    ; Since we are doing a rep stosd, count should be bytes/4.
-
-    %define FREE_SPACE 0x9000
-    mov edi, FREE_SPACE
-
-    push di                           ; REP STOSD alters DI.
-    mov ecx, 0x1000
-    xor eax, eax
-    cld
-    rep stosd
-    pop di                            ; Get DI back.
+	push di                           ; REP STOSD alters DI
+	mov ecx, 0x1000
+	xor eax, eax
+	cld
+	rep stosd
+	pop di                            ; Get DI back
 
 
-    ; Build the Page Map Level 4.
-    ; es:di points to the Page Map Level 4 table.
+	; Build the Page Map Level 4
+	; es:di points to the Page Map Level 4 table
 
-    lea eax, [es:di + 0x1000]         ; Put the address of the Page Directory Pointer Table in to EAX.
-    or eax, PAGE_PRESENT | PAGE_WRITE ; Or EAX with the flags - present flag, writable flag.
-    mov [es:di], eax                  ; Store the value of EAX as the first PML4E.
-
-
-    ; Build the Page Directory Pointer Table.
-    lea eax, [es:di + 0x2000]         ; Put the address of the Page Directory in to EAX.
-    or eax, PAGE_PRESENT | PAGE_WRITE ; Or EAX with the flags - present flag, writable flag.
-    mov [es:di + 0x1000], eax         ; Store the value of EAX as the first PDPTE.
+	lea eax, [es:di + 0x1000]         ; Put the address of the Page Directory Pointer Table in to EAX
+	or eax, PAGE_PRESENT | PAGE_WRITE ; Or EAX with the flags - present flag, writable flag
+	mov [es:di], eax                  ; Store the value of EAX as the first PML4E
 
 
-    ; Build the Page Directory.
-    lea eax, [es:di + 0x3000]         ; Put the address of the Page Table in to EAX.
-    or eax, PAGE_PRESENT | PAGE_WRITE ; Or EAX with the flags - present flag, writeable flag.
-    mov [es:di + 0x2000], eax         ; Store to value of EAX as the first PDE.
+	; Build the Page Directory Pointer Table
+	lea eax, [es:di + 0x2000]         ; Put the address of the Page Directory in to EAX
+	or eax, PAGE_PRESENT | PAGE_WRITE ; Or EAX with the flags - present flag, writable flag
+	mov [es:di + 0x1000], eax         ; Store the value of EAX as the first PDPTE
 
 
-    push di                           ; Save DI for the time being.
-    lea di, [di + 0x3000]             ; Point DI to the page table.
-    mov eax, PAGE_PRESENT | PAGE_WRITE    ; Move the flags into EAX - and point it to 0x0000.
+	; Build the Page Directory
+	lea eax, [es:di + 0x3000]         ; Put the address of the Page Table in to EAX
+	or eax, PAGE_PRESENT | PAGE_WRITE ; Or EAX with the flags - present flag, writeable flag
+	mov [es:di + 0x2000], eax         ; Store to value of EAX as the first PDE
 
 
-    ; Build the Page Table.
+	push di                           ; Save DI for the time being
+	lea di, [di + 0x3000]             ; Point DI to the page table
+	mov eax, PAGE_PRESENT | PAGE_WRITE    ; Move the flags into EAX - and point it to 0x0000
+
+
+	; Build the Page Table
 .LoopPageTable:
-    mov [es:di], eax
-    add eax, 0x1000
-    add di, 8
-    cmp eax, 0x200000                 ; If we did all 2MiB, end.
-    jb .LoopPageTable
+	mov [es:di], eax
+	add eax, 0x1000
+	add di, 8
+	cmp eax, 0x200000                 ; If we did all 2MiB, end
+	jb .LoopPageTable
 
-    pop di
+	pop di
 
 ; disable IRQs
-mov al, 0xff
-out 0xa1, al
-out 0x21, al
-nop
-nop
+	mov al, 0xff
+	out 0xa1, al
+	out 0x21, al
+	nop
+	nop
 
 ;    lidt [IDT]                        ; Load a zero length IDT so that any NMI causes a triple fault.
 
@@ -239,11 +232,11 @@ mov cr3, eax	; PML4 (should be set before enabling PG and PM)
 
 ; 64-bit GDT
 gdt64:
-        dq 0x0000000000000000       ; Null Descriptor
+	dq 0x0000000000000000       ; Null Descriptor
 .code equ $ - gdt64                 ; Code segment
-        dq 0x0020980000000000
+	dq 0x0020980000000000
 .data equ $ - gdt64                 ; Data segment
-        dq 0x0000920000000000
+	dq 0x0000920000000000
 
 ;.desc:
 ;        dw $ - gdt64 - 1            ; 16-bit Size (Limit)
@@ -258,11 +251,11 @@ gdt64:
 ;    dq 0x0000920000000000             ; 64-bit data descriptor (read/write).
 
 ALIGN 4
-    dw 0                              ; Padding to make the "address of the GDT" field aligned on a 4-byte boundary
+	dw 0                              ; Padding to make the "address of the GDT" field aligned on a 4-byte boundary
 
 .ptr:
-    dw $ - gdt64 - 1                  ; 16-bit Size (Limit) of GDT.
-    dd gdt64                          ; 32-bit Base Address of GDT. (CPU will zero extend to 64-bit)
+	dw $ - gdt64 - 1                  ; 16-bit Size (Limit) of GDT.
+	dd gdt64                          ; 32-bit Base Address of GDT. (CPU will zero extend to 64-bit)
 
 
 
@@ -288,8 +281,8 @@ Realm64:
 
 ALIGN 4
 IDT:
-    .Length       dw 0
-    .Base         dd 0
+	.Length       dw 0
+	.Base         dd 0
 
 
 		times sector_size - 2 - ($ - $$) db 0
