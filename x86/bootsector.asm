@@ -1,6 +1,7 @@
 ; nasm -f bin ./bootsector.asm
 ; ndisasm -b 16 bootsector
 ; bochsdbg -q -f bochsrc.bxrc
+; or qemu-system-x86_64 -no-reboot -curses -monitor telnet:127.0.0.1:55555,server,nowait -drive format=raw,file=bootsector
 
 %define PAGE_PRESENT    (1 << 0)
 %define PAGE_WRITE      (1 << 1)
