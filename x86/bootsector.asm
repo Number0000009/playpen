@@ -238,24 +238,24 @@ mov cr3, eax	; PML4 (should be set before enabling PG and PM)
 ;    dq gdt64                     ; Base.
 
 ; 64-bit GDT
-;gdt64:
-;        dq 0x0000000000000000       ; Null Descriptor
-;.code equ $ - gdt64                 ; Code segment
-;        dq 0x0020980000000000
-;.data equ $ - gdt64                 ; Data segment
-;        dq 0x0000920000000000
-;
+gdt64:
+        dq 0x0000000000000000       ; Null Descriptor
+.code equ $ - gdt64                 ; Code segment
+        dq 0x0020980000000000
+.data equ $ - gdt64                 ; Data segment
+        dq 0x0000920000000000
+
 ;.desc:
 ;        dw $ - gdt64 - 1            ; 16-bit Size (Limit)
 ;        dq gdt64                    ; 64-bit Base Address
 
-gdt64:
-.null:
-    dq 0x0000000000000000             ; Null Descriptor - should be present.
-
-.code:
-    dq 0x00209A0000000000             ; 64-bit code descriptor (exec/read).
-    dq 0x0000920000000000             ; 64-bit data descriptor (read/write).
+;gdt64:
+;.null:
+;    dq 0x0000000000000000             ; Null Descriptor - should be present.
+;
+;.code:
+;    dq 0x00209A0000000000             ; 64-bit code descriptor (exec/read).
+;    dq 0x0000920000000000             ; 64-bit data descriptor (read/write).
 
 ALIGN 4
     dw 0                              ; Padding to make the "address of the GDT" field aligned on a 4-byte boundary
@@ -270,21 +270,19 @@ ALIGN 4
 		BITS 64
 
 Realm64:
-		mov rax, 0x0742074207420742
+		cli				; clear the interrupt flag
+		mov ax, gdt64.data		; ax = data descriptor
+		mov ds, ax			; ds = data descriptor
+		mov es, ax			; es = data descriptor
+		mov fs, ax			; fs = data descriptor
+		mov gs, ax			; gs = data descriptor
+		mov ss, ax			; ss = data descriptor
+		mov edi, 0xB8000		; text screen base address
+		mov rax, 0x0742074207420742	; white "BBBBB..." on black bg
+		mov ecx, 500			; 500 times
+		rep stosq			; fill the edi address
 
-;		cli                           ; Clear the interrupt flag.
-;		mov ax, gdt64.data            ; Set the A-register to the data descriptor.
-;		mov ds, ax                    ; Set the data segment to the A-register.
-;		mov es, ax                    ; Set the extra segment to the A-register.
-;		mov fs, ax                    ; Set the F-segment to the A-register.
-;		mov gs, ax                    ; Set the G-segment to the A-register.
-;		mov ss, ax                    ; Set the stack segment to the A-register.
-;		mov edi, 0xB8000              ; Set the destination index to 0xB8000.
-;;		mov rax, 0x1F201F201F201F20   ; Set the A-register to 0x1F201F201F201F20.
-;		mov rax, 0x0742074207420742
-;		mov ecx, 500                  ; Set the C-register to 500.
-;		rep stosq                     ; Clear the screen.
-
+		mov rax, 0x0742074207420742	; this is for debugging
 		hlt
 		jmp $
 
