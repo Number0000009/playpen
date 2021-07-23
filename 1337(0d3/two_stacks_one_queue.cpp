@@ -9,7 +9,7 @@ element into the queue, and dequeue, which removes it.
 #include <stack>
 #include <array>
 #include <iostream>
-#include <stdexcept>
+#include <optional>
 
 template<typename T>
 class queue
@@ -23,13 +23,13 @@ public:
 		stack.push(d);
 	}
 
-	auto dequeue() -> T
+	auto dequeue() -> std::optional<T>
 	{
 		std::stack<T> temporary_stack;
 		T element;
 
 		if (stack.empty()) {
-			throw std::runtime_error("empty");
+			return std::nullopt;
 		}
 
 		/* Flip stack */
@@ -84,23 +84,18 @@ int main()
 		std::cout << "Dequing..." << std::endl;
 
 		for (auto&& i : check) {
-			int elem {-42};
+			auto elem {q.dequeue()};
+			std::cout << elem.value() << std::endl;
 
-			try {
-				elem = q.dequeue();
-				std::cout << elem << std::endl;
-			} catch (const std::exception& ex) {
-				std::cerr << "*** Error: " << ex.what() << std::endl;
-			}
 			if (elem != i) {
 				passed = false;
-				std::cerr << "Mismatch " << elem << " and " << i << std::endl;
+				std::cerr << "Mismatch " << elem.value() << " and " << i << std::endl;
 			}
 		}
 		std::cout << (passed ? "PASSED" : "FAILED") << std::endl;
 	}
 
-	/* Should error with 'empty' and continue */
+	/* Should error with std::nullopt elem and continue */
 	{
 		queue<int> q;
 		std::array<int, 3> check {44, 45, 46};
@@ -118,21 +113,19 @@ int main()
 		std::cout << "Dequing..." << std::endl;
 
 		for (auto&& i : check) {
-			try {
-				auto elem {q.dequeue()};
-				std::cout << elem << std::endl;
-			} catch (const std::exception& ex) {
+			auto elem {q.dequeue()};
+			std::cout << *elem << std::endl;
+
+			if (!elem || elem != i) {
 				passed1 = false;
-				std::cerr << "*** Error: " << ex.what() << std::endl;
+				std::cerr << "Mismatch " << *elem << " and " << i << std::endl;
 			}
 		}
 
-		try {
-			auto elem {q.dequeue()};
-			std::cout << elem << std::endl;
-		} catch (const std::exception& ex) {
+		auto elem {q.dequeue()};
+		std::cout << *elem << std::endl;
+		if (!elem) {
 			passed2 = true;
-			std::cerr << "*** Error: " << ex.what() << std::endl;
 		}
 
 		std::cout << ((passed1 && passed2) ? "PASSED" : "FAILED") << std::endl;
@@ -145,33 +138,28 @@ int main()
 		queue<int> q;
 		q.enqueue(std::forward<int>(check_constant));
 
-		int elem {-42};
 		bool passed {true};
 
-		try {
-			elem = q.dequeue();
-			std::cout << elem << std::endl;
-		} catch (const std::exception& ex) {
-			std::cerr << "*** Error: " << ex.what() << std::endl;
-		}
+		auto elem {q.dequeue()};
+		std::cout << elem.value() << std::endl;
+
 		if (elem != check_constant) {
 			passed = false;
-			std::cerr << "Mismatch " << elem << " and " << check_constant << std::endl;
+			std::cerr << "Mismatch " << elem.value() << " and " << check_constant << std::endl;
 		}
 		std::cout << (passed ? "PASSED" : "FAILED") << std::endl;
 	}
 
-	/* Should error with 'empty' and continue */
+	/* Should error with std::nullopt elem and continue */
 	{
 		queue<int> q;
 		bool passed {false};
 
-		try {
-			auto elem {q.dequeue()};
-			std::cout << elem << std::endl;
-		} catch (const std::exception& ex) {
+		auto elem {q.dequeue()};
+		std::cout << *elem << std::endl;
+
+		if (!elem) {
 			passed = true;
-			std::cerr << "*** Error: " << ex.what() << std::endl;
 		}
 		std::cout << (passed ? "PASSED" : "FAILED") << std::endl;
 	}
@@ -179,17 +167,13 @@ int main()
 	/* Should fail */
 	{
 		queue<int> q;
-		int elem {-42};
+		std::optional<int> elem {-42};
 		bool passed {false};
 
-		try {
-			elem  = q.dequeue();
-		} catch (const std::exception& ex) {
-			std::cerr << "*** Error: " << ex.what() << std::endl;
+		elem = q.dequeue();
 
-			if (elem == -42) {
-				passed = true;
-			}
+		if (elem != -42) {
+			passed = true;
 		}
 		std::cout << (passed ? "PASSED" : "FAILED") << std::endl;
 	}
