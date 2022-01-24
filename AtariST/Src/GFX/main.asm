@@ -1,4 +1,5 @@
 ; Enter SUPER mode
+; TODO: remove and use BIOS for setting up resolution
 	clr.l -(sp)
 	move.w #32,-(sp)
 	trap #1
@@ -30,7 +31,7 @@
 	trap #14
 	addq.l #2,sp
 
-	move.l d0,a1
+	move.l d0,a1		; Screen pointer
 
 ; x = [16 bit plane 0][16 bit plane 1][16 bit plane 2][16 bit plane3]
 ;     fedcba9876543210
@@ -38,71 +39,67 @@
 ; x next word = x + 8
 ; y next = y + 0xa0
 
-;	move.w #%1000000000000000,(a0)+
-;	move.w #%0000000000000000,(a0)+
-;	move.w #%0000000000000000,(a0)+
-;	move.w #%0000000000000000,(a0)+
-
-;	move.w #%1000000000000000,(a0)+
-;	move.w #%0000000000000000,(a0)+
-;	move.w #%0000000000000000,(a0)+
-;	move.w #%0000000000000000,(a0)+
-
 pos_x: equ 0
-pos_y: equ 200/2
+pos_y: equ 0
 
-	move.l #pos_x,d4
-	move.l #pos_y,d5
-
-	move.l #319,d3
+	move.w #pos_y,d5	; d5 -> d1 after tests
+	move.w #200,d7		; Remove after tests
+loop1:
+	move.w #pos_x,d4	; d4 -> d0 after tests
+	move.w #319,d6		; Remove after tests
 loop:
-	move.l a1,a0
+	move.l a1,a0		; Screen pointer
 
-	move.l d4,d0
-	move.l d5,d1
+	move.w d4,d0		; Remove after tests
+	move.w d5,d1		; Remove after tests
 
 ; y
 ; 160 = 2^7 + 32
-	eor d2,d2
+	eor.w d2,d2
 	rept 32
-	add.l d1,d2
+	add.w d1,d2
 	endr
 
-	lsl.l #7,d1
+	lsl.w #7,d1
 
-	add.l d2,d1
-	add.l d1,a0
+	add.w d2,d1
+	add.w d1,a0
 
 ; x
-; start_x + pos_x/2-th byte
-
 	move d0,d2
-	lsr.l #4,d2
-	lsl.l #3,d2
+; d2/16 * 8 and drop last 3 bits
+
+	lsr.w #1,d2
+	andi.b #$f8,d2
+
 ; d2-th word
 
 	add.l d2,a0
 
-; ???-th bit
-	divu #16,d0
-	swap.w d0
-	eor.l d1,d1
-	move.b d0,d1
-	move.l d1,d0
+; x-th bit
+
+; calculate the remainder
+; x % 2^n == x & (2^n - 1) => x % 2^4 == x & (2^4 - 1) => x % 16 = x & 15
+
+	andi.b #15,d0
 
 	move.w #%1000000000000000,d1
-	lsr.l d0,d1
+	lsr.w d0,d1
 
 	or.w d1,(a0)
+
+	addi.w #1,d4	; Remove after tests
+	subi.w #1,d6	; Ditto
+	bne loop	; Ditto
+
+	addi.w #1,d5	; Ditto
+	subi.b #1,d7	; Ditto
+	bne loop1	; Ditto
 
 ; Wait for a key
 	move.w #7,-(sp)
 	trap #1
 	addq.l #2,sp
-
-	addi.l #1,d4
-	subi.w #1,d3
-	bne loop
 
 ; Set medium resolution
 	move.b #%01,$ffff8260.w
