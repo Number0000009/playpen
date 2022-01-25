@@ -1,7 +1,7 @@
 ; Get video mode
 	move.w #4,-(sp)
 	trap #14
-	add.l #2,sp
+	addq.l #2,sp
 
 ; Store it for later
 	move.w d0,previous_video_mode
@@ -38,26 +38,20 @@ pos_x	equ 0
 pos_y	equ 0
 
 	move.w #pos_y,d5	; d5 -> d1 after tests
-	move.w #200,d7		; Remove after tests
+	move.w #200-1,d7	; Remove after tests
 loop1:
 	move.w #pos_x,d4	; d4 -> d0 after tests
-	move.w #319,d6		; Remove after tests
+	move.w #320-1,d6	; Remove after tests
 loop:
 	move.l a1,a0		; Screen pointer
 
 	move.w d4,d0		; Remove after tests
 	move.w d5,d1		; Remove after tests
 
-; y
-; 160 = 2^7 + 32
-	eor.w d2,d2
-	rept 32
-	add.w d1,d2
-	endr
-
-	lsl.w #7,d1
-
-	add.w d2,d1
+; y*160 = y * 2^7 + 32*y => y<<7 + y<<5
+	lsl.w #5,d1
+	add.w d1,a0
+	lsl.w #2,d1
 	add.w d1,a0
 
 ; x
@@ -82,13 +76,11 @@ loop:
 	lsr.w d0,d1
 	or.w d1,(a0)
 
-	addi.w #1,d4	; Remove after tests
-	subi.w #1,d6	; Ditto
-	bne loop	; Ditto
+	addq.w #1,d4	; Remove after tests
+	dbeq d6,loop	; Ditto
 
 	addi.w #1,d5	; Ditto
-	subi.b #1,d7	; Ditto
-	bne loop1	; Ditto
+	dbeq d7,loop1	; Ditto
 
 ; Wait for a key
 	move.w #7,-(sp)
