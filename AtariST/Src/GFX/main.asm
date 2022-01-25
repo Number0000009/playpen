@@ -1,15 +1,10 @@
-; Enter SUPER mode
-; TODO: remove and use BIOS for setting up resolution
-	clr.l -(sp)
-	move.w #32,-(sp)
-	trap #1
-	addq.l #6,sp
+; Get video mode
+	move.w #4,-(sp)
+	trap #14
+	add.l #2,sp
 
-; Mask interupts
-;	move.w #$2700,sr
-
-; Disable mouse
-;	move.b #$12,$fffffc02.w
+; Store it for later
+	move.w d0,previous_video_mode
 
 ; Disable cursor
 	move.w #0,-(sp)		; not needed
@@ -18,13 +13,13 @@
 	trap #14
 	addq.l #6,sp
 
-; Set 320x200x4 mode
-	clr.b $ffff8260.w
-
-; Read vram address (low byte is zero on the STE)
-;	move.l $ff8200,d0	; ff8201 = high byte, ff8203 = mid byte
-;	andi.l #$00ff00ff,d0
-;	lsl.w #$8,d0
+; Set 320x240x4 bitplans mode
+	move.w #0,-(sp)
+	move.l #-1,-(sp)
+	move.l #-1,-(sp)
+	move.w #5,-(sp)
+	trap #14
+	add.l #12,sp
 
 ; Read vram logical address via XBIOS
 	move.w #3,-(sp)
@@ -39,8 +34,8 @@
 ; x next word = x + 8
 ; y next = y + 0xa0
 
-pos_x: equ 0
-pos_y: equ 0
+pos_x	equ 0
+pos_y	equ 0
 
 	move.w #pos_y,d5	; d5 -> d1 after tests
 	move.w #200,d7		; Remove after tests
@@ -85,7 +80,6 @@ loop:
 
 	move.w #%1000000000000000,d1
 	lsr.w d0,d1
-
 	or.w d1,(a0)
 
 	addi.w #1,d4	; Remove after tests
@@ -101,11 +95,13 @@ loop:
 	trap #1
 	addq.l #2,sp
 
-; Set medium resolution
-	move.b #%01,$ffff8260.w
-
-; Unmask interrupts
-;	move.w #$2300,sr
+; Restore resolution
+	move.w previous_video_mode,-(sp)
+	move.l #-1,-(sp)
+	move.l #-1,-(sp)
+	move.w #5,-(sp)
+	trap #14
+	add.l #12,sp
 
 ; Enable cursor
 ;	move.w #0,-(sp)		; not needed
@@ -117,11 +113,8 @@ loop:
 ; Enable mouse
 ;	move.b #$8,$fffffc02.w
 
-; Enter USER mode
-	move.w #32,-(sp)
-	trap #1
-	addq.l #6,sp
-
 ; Exit
 	clr.w -(sp)
 	trap #1
+
+previous_video_mode: dw 0
