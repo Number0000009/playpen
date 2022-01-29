@@ -22,7 +22,7 @@
 	add.l #12,sp
 
 ; Load palette
-	move.l #bitmap,-(sp)
+	move.l #palette,-(sp)
 	move.w #6,-(sp)
 	trap #14
 	addq.l #6,sp
@@ -34,7 +34,7 @@
 
 	move.l d0,a1		; Screen pointer
 
-	lea bitmap+(16*2),a0
+	lea bitmap,a0
 
 	move.w #(32000/4)-2,d0
 loop:
@@ -63,4 +63,5 @@ loop:
 previous_video_mode: dw 0
 
 	align 4
-bitmap	incbin "dw.raw"
+palette:	incbin "dw.pal"
+bitmap:		incbin "dw.raw"
