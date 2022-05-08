@@ -20,6 +20,12 @@ op:			equ $ff8a3b	; logical operation
 line_num:		equ $ff8a3c
 skew:			equ $ff8a3d	; source shift
 
+sprite_x:		equ 1		; sprite pos in pixels
+					; this has to be recalculated in screen
+					; word number and endmask (where 0 is $ffff,
+					; 1 is $7fff and so forth) and skew (where 0 is 0,
+					; 1 is 1, and so-forth)
+sprite_y:		equ 131		; sprite pos in pixels
 
 	SECTION TEXT
 
@@ -91,10 +97,10 @@ loop:
 ; BLiTTER
 	move.l screen_ptr,d0
 	move.l d0,d1
-	addi.l #64,d0
 	move.l d0,src_addr
 	move.l d1,d0
-	addi.l #(131*160)+8,d0
+
+	addi.l #(sprite_y*160)+0,d0
 	move.l d0,dst_addr
 
 	move.w #4,words_per_line_count
@@ -106,13 +112,45 @@ loop:
 	move.w #2,dst_x_inc
 	move.w #320/2-6,dst_y_inc
 
-	move.w #$0fff,endmask1
-	move.w #$0fff,endmask2
-	move.w #$ffff,endmask3
+	move.w #$0003,endmask1
+	move.w #$0003,endmask2
+	move.w #$0003,endmask3
 
 	move.b #2,hop			; source
 	move.b #3,op
-	move.b #4,skew
+	move.b #14,skew
+
+	move.b #%11000000,line_num	; run (BUSY | HOG)
+
+; Blit second half
+
+	move.l screen_ptr,d0
+	move.l d0,d1
+	move.l d0,src_addr
+	move.l d1,d0
+
+	; next screen word
+	addi.l #(sprite_y*160)+8,d0
+	move.l d0,dst_addr
+
+	move.w #4,words_per_line_count
+	move.w #10,lines_per_block
+
+	move.w #2,src_x_inc
+	move.w #320/2-6,src_y_inc
+
+	move.w #2,dst_x_inc
+	move.w #320/2-6,dst_y_inc
+
+	; 16-2 pixels
+	move.w #$ffff-3,endmask1
+	move.w #$ffff-3,endmask2
+	move.w #$ffff-3,endmask3
+
+	move.b #2,hop			; source
+	move.b #3,op
+	; 16-2 pixels
+	move.b #-2,skew
 
 	move.b #%11000000,line_num	; run (BUSY | HOG)
 
@@ -168,5 +206,5 @@ previous_video_mode:	ds.b 1
 
 
 	SECTION DATA
-bitmap:			incbin "dw.raw"
+bitmap:			incbin "dw1.raw"
 palette:		incbin "dw.pal"
