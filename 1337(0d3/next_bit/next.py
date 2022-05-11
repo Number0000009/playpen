@@ -23,6 +23,7 @@
 # swap:
 # 1010
 # TODO: whoops, what to do with the shift to the right???
+# shift if the right part has at least 2 bits
 
 # say we have 0b10011100 -> 0b10100011
 # 0, 0, 1, 1, 1, 0
@@ -45,8 +46,8 @@
 
 #n = 3
 #n = 6
-n = 9
-#n = 0b10100011 # 163
+#n = 9
+n = 0b10100011 # 163
 
 sn = list("{0:08b}".format(n))
 print(n, bin(n))
@@ -59,13 +60,12 @@ for i in range(bits):
 		del sn[bits - i:bits - i + 1]
 		sn.insert(bits - i + 1, "0")
 
-		print(sn)
-
 		# count trailing zeroes
 		zeroes = 0
 		latch2 = False
 
-		if sn[bits] != "1":
+		# if the last bit is "0" and there's at least 2 bits
+		if sn[bits] != "1" and i >= 2:
 			for j in range(bits - i - 1, bits - 1):
 				if sn[j] == "0" and latch2 == False:
 					zeroes += 1
