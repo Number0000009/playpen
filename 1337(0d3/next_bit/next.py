@@ -44,48 +44,103 @@
 # 10 -> 01
 # 101001 | 01 = 10100101
 
+import unittest
+
 #n = 3
 #n = 6
 #n = 9
-n = 0b10100011 # 163
+#n = 0b10100011 # 163
 
-sn = list("{0:08b}".format(n))
-print(n, bin(n))
+def next(n:int) -> int:
+	sn = list("{0:08b}".format(n))
+	print(n, bin(n))
 
-bits = len(sn) - 1
+	bits = len(sn) - 1
 
-latch = False
-for i in range(bits):
-	if sn[bits - i] == "0" and latch == True:
-		del sn[bits - i:bits - i + 1]
-		sn.insert(bits - i + 1, "0")
+	latch = False
+	for i in range(bits):
+		if sn[bits - i] == "0" and latch == True:
+			del sn[bits - i:bits - i + 1]
+			sn.insert(bits - i + 1, "0")
 
-		# count trailing zeroes
-		zeroes = 0
-		latch2 = False
+			# count trailing zeroes
+			zeroes = 0
+			latch2 = False
 
-		# if the last bit is "0" and there's at least 2 bits
-		if sn[bits] != "1" and i >= 2:
-			for j in range(bits - i - 1, bits - 1):
-				if sn[j] == "0" and latch2 == False:
-					zeroes += 1
-				else:
-					latch2 = True
-					continue
+			# if the last bit is "0" and there's at least 2 bits
+			if sn[bits] != "1" and i >= 2:
+				for j in range(bits - i - 1, bits - 1):
+					if sn[j] == "0" and latch2 == False:
+						zeroes += 1
+					else:
+						latch2 = True
+						continue
 
-		for k in range(zeroes):
-			del sn[bits: bits + 1]
-			sn.insert(j, "0")
+			for k in range(zeroes):
+				del sn[bits: bits + 1]
+				sn.insert(j, "0")
 
-		break
-	else:
-		latch = True
+			break
+		else:
+			latch = True
 
-z = str()
+	z = str()
 
-for b in sn:
-	z += b
+	for b in sn:
+		z += b
 
-z = int(z, 2)
+	z = int(z, 2)
 
-print(z, bin(z))
+	print(z, bin(z))
+	return z
+
+
+class TestMethods(unittest.TestCase):
+	def test_one(self):
+		n = next(3)
+		self.assertEqual(n, 5)
+
+
+	def test_two(self):
+		n = next(6)
+		self.assertEqual(n, 9)
+
+
+	def test_three(self):
+		n = next(9)
+		self.assertEqual(n, 10)
+
+
+	def test_four(self):
+		n = next(163)
+		self.assertEqual(n, 165)
+
+
+	def test_five(self):
+		n = next(0)
+		self.assertEqual(n, 0)
+
+
+	def test_six(self):
+		n = next(1)
+		self.assertEqual(n, 2)
+
+
+	def test_seven(self):
+		n = next(0b10000000)
+		self.assertNotEqual(n, 0b100000000)
+
+
+	def test_eight(self):
+		n = next(0b00001)
+		self.assertEqual(n, 0b00010)
+
+
+	def test_nine(self):
+		n = next(2)
+		self.assertEqual(n, 4)
+
+
+if __name__ == '__main__':
+	unittest.main()
+
