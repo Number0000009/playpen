@@ -69,7 +69,7 @@ def next(n:int) -> int:
 
 			# if the last bit is "0" and there's at least 2 bits
 			if sn[bits] != "1" and i >= 2:
-				for j in range(bits - i - 1, bits - 1):
+				for j in range(bits - i + 1, bits + 1):
 					if sn[j] == "0" and latch2 == False:
 						zeroes += 1
 					else:
@@ -78,7 +78,7 @@ def next(n:int) -> int:
 
 			for k in range(zeroes):
 				del sn[bits: bits + 1]
-				sn.insert(j, "0")
+				sn.insert(j - 1, "0")
 
 			break
 		else:
