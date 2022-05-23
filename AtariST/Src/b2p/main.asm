@@ -43,8 +43,8 @@
 ; TODO: implement b2p (a0 - src, a1 - dst)
 
 ; naive impl
-	move.l #320*200/16-1,d0
-	eor.b d2,d2	; pos_x
+	move.l #320/16*200/16-1,d0
+	eor.b d2,d2	; bmp[pos]
 
 loop:
 	move.w #%1000000000000000,d5	; bitmap
@@ -67,17 +67,14 @@ loop:
 ;	move.b d1,d3
 ;	andi.b #%1000,d3
 
-; calculate screen word
-	move d2,d3
-	lsr.w #1,d3
-	andi.b #$f8,d3
-
 ; bitmap
-	or.w d5,(a1,d3)
+; WIP: TODO: this really should be just folded into 2 x move.l d5,(a1)+, so we don't need to calculate screen word
+	move.l d5,(a1)+
+	move.l d5,(a1)+
 
 	lsr.w #1,d5
 
-	addq #1,d2	; increment pos_x
+	addq #1,d2	; increment pos
 
 	endr
 
