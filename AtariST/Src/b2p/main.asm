@@ -16,7 +16,7 @@
 	trap #14
 	addq.l #6,sp
 
-; Set 320x240x4 bitplans mode
+; Set 320x200x4 bitplans mode
 	move.w #0,-(sp)
 	move.l #-1,-(sp)
 	move.l #-1,-(sp)
