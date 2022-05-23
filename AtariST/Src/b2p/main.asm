@@ -43,20 +43,29 @@
 ; TODO: implement b2p (a0 - src, a1 - dst)
 
 ; naive impl
-	move.l #320-1,d0
+	move.l #320*200/16-1,d0
 	eor.b d2,d2	; pos_x
+
 loop:
+	move.w #%1000000000000000,d5	; bitmap
+
+	rept 16
+
 	move.b (a0)+,d1
+; one 'bmp' byte = 4x16 screen bytes (4 words 1 per plane)
 
 ; calculate colour number
-	move.b d1,d3
-	andi.b #%0001,d3
-	move.b d1,d4
-	andi.b #%0010,d4
-	move.b d1,d5
-	andi.b #%0100,d5
-	move.b d1,d6
-	andi.b #%1000,d6
+;	move.b d1,d3
+;	andi.b #%0001,d3
+
+;	move.b d1,d3
+;	andi.b #%0010,d3
+
+;	move.b d1,d3
+;	andi.b #%0100,d3
+
+;	move.b d1,d3
+;	andi.b #%1000,d3
 
 ; calculate screen word
 	move d2,d3
@@ -64,15 +73,13 @@ loop:
 	andi.b #$f8,d3
 
 ; bitmap
-	move.b d2,d4
-
-	andi.b #15,d4
-	move.w #%1000000000000000,d5
-	lsr.w d4,d5
-
 	or.w d5,(a1,d3)
 
+	lsr.w #1,d5
+
 	addq #1,d2	; increment pos_x
+
+	endr
 
 	dbra d0,loop
 
