@@ -55,20 +55,28 @@ loop:
 ; one 'bmp' byte = 4x16 screen bytes (4 words 1 per plane)
 
 ; calculate colour number
-;	move.b d1,d3
-;	andi.b #%0001,d3
+	move.b d1,d3
+	andi.b #%0001,d3	; Plane #0 word
 
-;	move.b d1,d3
-;	andi.b #%0010,d3
+	lsl.w #4,d3
 
-;	move.b d1,d3
-;	andi.b #%0100,d3
+	move.b d1,d4
+	andi.b #%0010,d4	; Plane #1 word
 
-;	move.b d1,d3
-;	andi.b #%1000,d3
+	or.l d3,d4
 
-; bitmap
-; WIP: TODO: this really should be just folded into 2 x move.l d5,(a1)+, so we don't need to calculate screen word
+	move.b d1,d3
+	andi.b #%0100,d3	; Plane #2 word
+
+	lsl.w #4,d3
+
+	move.b d1,d6
+	andi.b #%1000,d6	; Plane #3 word
+
+	or.l d3,d6
+
+; TODO: merge the above to 2 longs
+
 	move.l d5,(a1)+
 	move.l d5,(a1)+
 
