@@ -1,6 +1,3 @@
-; bitmap 320x200x8bpp to Atari planar screen
-; TODO: specify number of planes for faster output
-
 ; Get video mode
 	move.w #4,-(sp)
 	trap #14
