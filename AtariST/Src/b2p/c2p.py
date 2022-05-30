@@ -32,3 +32,49 @@ screen_byte = 0b1000000000000000 >> (pos_x & 15)
 print("screen word number", pos_x // 16)
 print("screen byte number", (pos_x % 8) // 4)
 print("screen byte", hex(screen_byte))
+
+f = open('logopouet.raw', 'rb')
+data = f.read()
+f.close()
+
+screen = bytearray()
+for i in range(320*200//16*8):
+	screen.append(0)
+
+word_size = 2
+word_count = 0
+
+for i in range(320*200):
+	colour = data[i]
+
+	plane0 = colour & 0b0001
+	plane1 = colour & 0b0010
+	plane2 = colour & 0b0100
+	plane3 = colour & 0b1000
+
+	screen_bitmap = 0b1000000000000000 >> (i & 15)
+	screen_word = word_count // 16
+
+	screen_word *= word_size
+
+	if plane0:
+		screen[(screen_word + 0) + 0] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
+		screen[(screen_word + 0) + 1] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
+
+	if plane1:
+		screen[(screen_word + 1 * word_size) + 0] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
+		screen[(screen_word + 1 * word_size) + 1] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
+
+	if plane2:
+		screen[(screen_word + 2 * word_size) + 0] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
+		screen[(screen_word + 2 * word_size) + 1] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
+
+	if plane3:
+		screen[(screen_word + 3 * word_size) + 0] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
+		screen[(screen_word + 3 * word_size) + 1] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
+
+	word_count += 4
+
+f = open('logopouet.pi1', 'wb')
+f.write(screen)
+f.close()
