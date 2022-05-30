@@ -36,7 +36,7 @@
 
 	lea bitmap,a0
 
-	move.w #(32000/4)-2,d0
+	move.w #(32000/4),d0
 loop:
 	move.l (a0)+,(a1)+
 	dbra d0,loop
