@@ -25,10 +25,10 @@ screen_word = 0
 for i in range(320*200):
 	colour = data[i]
 
-	plane0 = colour & 0b0001
-	plane1 = colour & 0b0010
-	plane2 = colour & 0b0100
-	plane3 = colour & 0b1000
+	plane0 = bool(colour & 0b0001)
+	plane1 = bool(colour & 0b0010)
+	plane2 = bool(colour & 0b0100)
+	plane3 = bool(colour & 0b1000)
 
 	screen_bitmap = 0b1000000000000000 >> (i & 15)
 
@@ -38,21 +38,17 @@ for i in range(320*200):
 		if i > 0:
 			screen_word += 8
 
-	if plane0:
-		screen[(screen_word + 0) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
-		screen[(screen_word + 0) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
+	screen[(screen_word + 0) * plane0 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
+	screen[(screen_word + 0) * plane0 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
 
-	if plane1:
-		screen[(screen_word + 2) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
-		screen[(screen_word + 2) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
+	screen[(screen_word + 2) * plane1 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
+	screen[(screen_word + 2) * plane1 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
 
-	if plane2:
-		screen[(screen_word + 4) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
-		screen[(screen_word + 4) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
+	screen[(screen_word + 4) * plane2 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
+	screen[(screen_word + 4) * plane2 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
 
-	if plane3:
-		screen[(screen_word + 6) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
-		screen[(screen_word + 6) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
+	screen[(screen_word + 6) * plane3 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
+	screen[(screen_word + 6) * plane3 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
 
 f = open('logopouet.pi1', 'wb')
 f.write(screen)
