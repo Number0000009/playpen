@@ -38,17 +38,17 @@ for i in range(320*200):
 		if i > 0:
 			screen_word += 8
 
-	screen[(screen_word + 0) * plane0 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
-	screen[(screen_word + 0) * plane0 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
+	screen[(screen_word + 0) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1] * plane0
+	screen[(screen_word + 0) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0] * plane0
 
-	screen[(screen_word + 2) * plane1 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
-	screen[(screen_word + 2) * plane1 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
+	screen[(screen_word + 2) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1] * plane1
+	screen[(screen_word + 2) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0] * plane1
 
-	screen[(screen_word + 4) * plane2 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
-	screen[(screen_word + 4) * plane2 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
+	screen[(screen_word + 4) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1] * plane2
+	screen[(screen_word + 4) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0] * plane2
 
-	screen[(screen_word + 6) * plane3 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1]
-	screen[(screen_word + 6) * plane3 + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0]
+	screen[(screen_word + 6) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[1] * plane3
+	screen[(screen_word + 6) + word_byte] |= (screen_bitmap).to_bytes(2, byteorder="little")[0] * plane3
 
 f = open('logopouet.pi1', 'wb')
 f.write(screen)
