@@ -32,7 +32,7 @@ for i in range(320*200):
 
 	screen_bitmap = 0b1000000000000000 >> (i & 15)
 
-	word_byte = (i % 16) // 8
+	word_byte = (i & 15) // 8
 
 	if (i & 15) == False:
 		if i > 0:
