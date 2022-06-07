@@ -41,6 +41,22 @@
 
 ; ----------------------------------------
 ; TODO: implement b2p (a0 - src, a1 - dst)
+; The idea is to get a table mapping plane0, plane1, plane2, plane 3 colour indices
+; to pre-shifted bitmap:
+; [     plane 0    ] [     plane 1    ] [     plane 2    ] [     plane 3    ]
+;  0000000000000000   0000000000000000   0000000000000000   0000000000000000
+; Say for 0xff -> all planes have bit set,
+; iteration 1:
+; [     plane 0    ] [     plane 1    ] [     plane 2    ] [     plane 3    ]
+;  1000000000000000   1000000000000000   1000000000000000   1000000000000000
+; iteration 2:
+; [     plane 0    ] [     plane 1    ] [     plane 2    ] [     plane 3    ]
+;  0100000000000000   0100000000000000   0100000000000000   0100000000000000
+; and so on, shifting right by #1 each step
+; So the table size is (16 colours * 8 bytes) * 16 bits per plane = 2048 bytes
+
+; then	movep.l d0, (a0)
+;		movep.l d1, 1(a0)
 
 ; naive impl
 	move.l #320/16*200/16-1,d0
