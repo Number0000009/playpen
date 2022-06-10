@@ -25,10 +25,10 @@
 	add.l #12,sp
 
 ; Load palette
-;	move.l #palette,-(sp)
-;	move.w #6,-(sp)
-;	trap #14
-;	addq.l #6,sp
+	move.l #palette,-(sp)
+	move.w #6,-(sp)
+	trap #14
+	addq.l #6,sp
 
 ; Read vram logical address via XBIOS
 	move.w #3,-(sp)
@@ -39,68 +39,26 @@
 
 	lea bitmap,a0
 
-; ----------------------------------------
-; TODO: implement b2p (a0 - src, a1 - dst)
-; The idea is to get a table mapping plane0, plane1, plane2, plane 3 colour indices
-; to pre-shifted bitmap:
-; [     plane 0    ] [     plane 1    ] [     plane 2    ] [     plane 3    ]
-;  0000000000000000   0000000000000000   0000000000000000   0000000000000000
-; Say for 0xff -> all planes have bit set,
-; iteration 1:
-; [     plane 0    ] [     plane 1    ] [     plane 2    ] [     plane 3    ]
-;  1000000000000000   1000000000000000   1000000000000000   1000000000000000
-; iteration 2:
-; [     plane 0    ] [     plane 1    ] [     plane 2    ] [     plane 3    ]
-;  0100000000000000   0100000000000000   0100000000000000   0100000000000000
-; and so on, shifting right by #1 each step
-; So the table size is (16 colours * 8 bytes) * 16 bits per plane = 2048 bytes
-
-; then	movep.l d0, (a0)
-;		movep.l d1, 1(a0)
-
-; naive impl
-	move.l #320/16*200/16-1,d0
-	eor.b d2,d2	; bmp[pos]
-
+	move.l #320/16*200,d0
 loop:
-	move.w #%1000000000000000,d5	; bitmap
+	lea c2p_tbl,a2
 
 	rept 16
-
+	moveq #0,d1
 	move.b (a0)+,d1
-; one 'bmp' byte = 4x16 screen bytes (4 words 1 per plane)
 
-; calculate colour number
-	move.b d1,d3
-	andi.b #%0001,d3	; Plane #0 word
+	lsl.w #7,d1
 
-	lsl.w #4,d3
+	move.l 0(a2,d1),d2
+	move.l 4(a2,d1),d3
 
-	move.b d1,d4
-	andi.b #%0010,d4	; Plane #1 word
+	addq #8,a2
 
-	or.l d3,d4
-
-	move.b d1,d3
-	andi.b #%0100,d3	; Plane #2 word
-
-	lsl.w #4,d3
-
-	move.b d1,d6
-	andi.b #%1000,d6	; Plane #3 word
-
-	or.l d3,d6
-
-; TODO: merge the above to 2 longs
-
-	move.l d5,(a1)+
-	move.l d5,(a1)+
-
-	lsr.w #1,d5
-
-	addq #1,d2	; increment pos
-
+	or.l d2,(a1)
+	or.l d3,4(a1)
 	endr
+
+	addq.l #8,a1
 
 	dbra d0,loop
 
@@ -128,5 +86,7 @@ loop:
 previous_video_mode: dw 0
 
 	align 4
-;palette:	incbin "dw.pal"
+palette:	incbin "logopouet.pal"
 bitmap:		incbin "logopouet.raw"
+	align 4
+c2p_tbl:	incbin "table.bin"
