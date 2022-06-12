@@ -5,22 +5,22 @@ x = 0
 
 table = bytearray()
 
-for _ in range(2048):
+for _ in range(320*16*8):
 	table.append(0)
 
-for colour in range(16):
-# bits per plane
-	for b in range(16):
+for i in range(320):
+
+	bitmap = 0b1000000000000000 >> (i & 15)
+
+	for colour in range(16):
 
 		plane0 = bool(colour & 0b0001)
 		plane1 = bool(colour & 0b0010)
 		plane2 = bool(colour & 0b0100)
 		plane3 = bool(colour & 0b1000)
 
-		bitmap = 0b1000000000000000 >> (x & 15)
-
 		if plane0:
-			table[z] = (bitmap).to_bytes(2, byteorder="little")[1]
+			table[z+0] = (bitmap).to_bytes(2, byteorder="little")[1]
 			table[z+1] = (bitmap).to_bytes(2, byteorder="little")[0]
 
 		if plane1:
@@ -36,7 +36,6 @@ for colour in range(16):
 			table[z+7] = (bitmap).to_bytes(2, byteorder="little")[0]
 
 		z += 8
-		x += 1
 
 f = open('table.bin', 'wb')
 f.write(table)

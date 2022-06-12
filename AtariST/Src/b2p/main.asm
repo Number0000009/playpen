@@ -39,29 +39,133 @@
 
 	lea bitmap,a0
 
-	move.l #320/16*200,d0
-loop:
+	move.w #200-1,d1
+loop1:
+	move.w #320/16-1,d0
+
+; the idea is to have table indexed by pixel number
+; instead of colour numeber,
+; tbl[pix][colour]
+; per each pixel 16 colours per 8 bytes = 128 bytes per pixel
 	lea c2p_tbl,a2
 
-	rept 16
-	moveq #0,d1
-	move.b (a0)+,d1
+	move.l a2,a3			; pixel 0
+	move.l a3,a4
+	move.l a4,a5
 
-	lsl.w #7,d1
+	add.l #128,a3			; pixel 1
+	add.l #128+128,a4		; pixel 2
+	add.l #128+128+128,a5		; pixel 3
+loop:
+; Planes 0, 1
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	move.l (a2,d2),d3	; plane 0, 1
+	move.l 4(a2,d2),d4	; plane 2, 3
 
-	move.l 0(a2,d1),d2
-	move.l 4(a2,d1),d3
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a3,d2),d3
+	or.l 4(a3,d2),d4
 
-	addq #8,a2
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a4,d2),d3
+	or.l 4(a4,d2),d4
 
-	or.l d2,(a1)
-	or.l d3,4(a1)
-	endr
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a5,d2),d3
+	or.l 4(a5,d2),d4
+
+	add.l #128+128+128+128,a2	; pixel 4
+	add.l #128+128+128+128,a3	; pixel 5
+	add.l #128+128+128+128,a4	; pixel 6
+	add.l #128+128+128+128,a5	; pixel 7
+
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a2,d2),d3
+	or.l 4(a2,d2),d4
+
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a3,d2),d3
+	or.l 4(a3,d2),d4
+
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a4,d2),d3
+	or.l 4(a4,d2),d4
+
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a5,d2),d3
+	or.l 4(a5,d2),d4
+
+	add.l #128+128+128+128,a2
+	add.l #128+128+128+128,a3
+	add.l #128+128+128+128,a4
+	add.l #128+128+128+128,a5
+
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a2,d2),d3
+	or.l 4(a2,d2),d4
+
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a3,d2),d3
+	or.l 4(a3,d2),d4
+
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a4,d2),d3
+	or.l 4(a4,d2),d4
+
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a5,d2),d3
+	or.l 4(a5,d2),d4
+
+	add.l #128+128+128+128,a2
+	add.l #128+128+128+128,a3
+	add.l #128+128+128+128,a4
+	add.l #128+128+128+128,a5
+
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a2,d2),d3
+	or.l 4(a2,d2),d4
+
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a3,d2),d3
+	or.l 4(a3,d2),d4
+
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a4,d2),d3
+	or.l 4(a4,d2),d4
+
+	move.b (a0)+,d2
+	lsl.b #3,d2		; TODO: re-index colour numbers in chunky file accordingly?
+	or.l (a5,d2),d3
+	or.l 4(a5,d2),d4
+
+	move.l d3,(a1)
+	move.l d4,4(a1)
+
+	add.l #128+128+128+128,a2
+	add.l #128+128+128+128,a3
+	add.l #128+128+128+128,a4
+	add.l #128+128+128+128,a5
 
 	addq.l #8,a1
 
 	dbra d0,loop
 
+	dbra d1,loop1
 ; ----------------------------------------
 
 ; Wait for a key
@@ -86,7 +190,6 @@ loop:
 previous_video_mode: dw 0
 
 	align 4
+c2p_tbl:	incbin "table.bin"
 palette:	incbin "logopouet.pal"
 bitmap:		incbin "logopouet.raw"
-	align 4
-c2p_tbl:	incbin "table.bin"
