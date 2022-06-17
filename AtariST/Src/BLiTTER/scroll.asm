@@ -96,22 +96,32 @@ loop:
 ; BLiTTER
 
 	move.w #320-16,d5
-;	move.w #0,d5
 	move.w #sprite_x,d3
-;	move.w #15,d3
+	move.w #sprite_y,d6
 
 loop1:
 	move.l screen_ptr,d0
 	move.l d0,src_addr
 
-	addi.l #(sprite_y*160)+0,d0
+;	addi.l #(sprite_y*160)+0,d0
+	move.w d6,d7
+	mulu #160,d7
+	add.l d7,d0
+				; 58
+;	move.w d6,d7
+;	lsl.w #7,d7
+;	add.l d7,d0
+;	move.w d6,d7
+;	lsl.w #5,d7
+;	add.l d7,d0
+				; 60
 
 ; calculate screen word
 	move.w d3,d2
 	lsr.w #1,d2
 	andi.b #$f8,d2
 	add.w d2,d0
-;
+
 	move.l d0,dst_addr
 
 	move.w #4,words_per_line_count
@@ -150,7 +160,12 @@ loop1:
 	move.l d0,src_addr
 
 ; next screen word
-	addi.l #(sprite_y*160)+8,d0
+;	addi.l #(sprite_y*160)+8,d0
+
+	add.l d7,d0
+	addq #8,d0
+				; 12
+
 	add.l d2,d0
 	move.l d0,dst_addr
 
