@@ -99,6 +99,8 @@ loop:
 	move.w #sprite_x,d3
 	move.w #sprite_y,d6
 
+	moveq #0,d5
+	moveq #0,d3
 loop1:
 	move.l screen_ptr,d0
 	move.l d0,src_addr
@@ -141,8 +143,25 @@ loop1:
 	move.w d0,endmask2
 	move.w d0,endmask3
 
-	move.b #2,hop			; source
-	move.b #3,op
+	move.w #$0ff0,halftone+0
+	move.w #$1ff8,halftone+2
+	move.w #$3ffc,halftone+4
+	move.w #$7ffe,halftone+6
+	move.w #$ffff,halftone+8
+	move.w #$ffff,halftone+10
+	move.w #$ffff,halftone+12
+	move.w #$ffff,halftone+14
+	move.w #$ffff,halftone+16
+	move.w #$ffff,halftone+18
+	move.w #$ffff,halftone+20
+	move.w #$ffff,halftone+22
+	move.w #$7ffe,halftone+24
+	move.w #$3ffc,halftone+26
+	move.w #$1ff8,halftone+28
+	move.w #$0ff0,halftone+30
+
+	move.b #3,hop
+	move.b #7,op
 
 	move.b d4,skew
 
@@ -195,8 +214,8 @@ loop1:
 	move.w d0,endmask2
 	move.w d0,endmask3
 
-	move.b #2,hop			; source
-	move.b #3,op
+	move.b #3,hop
+	move.b #7,op
 
 	moveq #0,d0
 	sub.b d2,d0
@@ -265,5 +284,6 @@ previous_video_mode:	ds.b 1
 
 
 	SECTION DATA
-bitmap:			incbin "dw1.raw"
+;bitmap:			incbin "dw1.raw"
+bitmap:			incbin "sm.raw"
 palette:		incbin "dw.pal"
