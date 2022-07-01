@@ -88,36 +88,33 @@ loop:
 	lsr.w #8,d0
 	move.l d0,$ff8200
 
-	move.l #140,d6
-	moveq #0,d5
-
-loop1:
 ; BLiTTER
 	move.l screen_ptr,d0
 	move.l d0,src_addr
-	addi.l #320/2/2/2,d0
-	add.l d5,d0
-	addi.l #160,d5
+	addi.l #(100*160),d0
 	move.l d0,dst_addr
 
-;	move.w #320/2/2,words_per_line_count	; full line
-;	move.w #1,lines_per_block
+	move.l #100-20,d6
+	moveq #0,d5
 
-;	move.w #2,src_x_inc		; 2 bytes per word increment
-;	move.w #0,src_y_inc		; 0 bytes per line increment
+loop1:
+	move.l screen_ptr,d0
+	move.l d0,src_addr
 
-;	move.w #2,dst_x_inc		; 2 bytes per word increment
-;	move.w #0,dst_y_inc		; 0 bytes per line increment
+	addi.l #(100*160),d0
+	add.l d5,d0
+	move.l d0,dst_addr
 
+	add.l #80*2,d5						; 80 words * 2 = 160 bytes
 
-	move.w #20,words_per_line_count
-	move.w #60,lines_per_block
+	move.w #80,words_per_line_count		; 320 pixels, 4 words contain 16 pixels => (320//16*4)
+	move.w #20,lines_per_block
 
-	move.w #2,src_x_inc
-	move.w #122,src_y_inc
+	move.w #2,src_x_inc					; offset to the next word in bytes
+	move.w #0,src_y_inc					; offset from the last word to the first word in bytes
 
-	move.w #2,dst_x_inc
-	move.w #122,dst_y_inc
+	move.w #2,dst_x_inc					; offset to the next word in bytes
+	move.w #0,dst_y_inc					; offset from the last word to the first words in bytes
 
 	move.w #$ffff,endmask1
 	move.w #$ffff,endmask2
@@ -125,16 +122,14 @@ loop1:
 
 	move.b #2,hop			; source
 	move.b #3,op			; source
-;	move.b #0,hop
-;	move.b #15,op			; all "1"
 	move.b #0,skew
 
 	move.b #%11000000,line_num	; run (BUSY | HOG)
 
 ; wvbl
-;	move.w #$25,-(sp)
-;	trap #14
-;	addq.l #2,sp
+	move.w #$25,-(sp)
+	trap #14
+	addq.l #2,sp
 
 	dbra d6,loop1
 
