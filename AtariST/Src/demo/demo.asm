@@ -29,8 +29,8 @@ skew:			equ $ff8a3d	; source shift
 ; d0
 swap_buffers	MACRO
 ; Swap screen
-		lsr.w #8,d0
-		move.l d0,$ff8200
+		lsr.w	#8,d0
+		move.l	d0,$ff8200
 		ENDM
 
 ; Inputs:
@@ -38,14 +38,23 @@ swap_buffers	MACRO
 ; Outputs:
 ; None
 ; Corrupts:
-; ???
+; d0
 wait_for_vbl	MACRO
 ; wait for VBL
-		move.w	#$25,-(sp)
-		trap	#14
-		addq.l	#2,sp
-		ENDM
 
+; Ummask interupts
+;		move.w	#$2300,sr
+
+		move.w	#0,$466
+\@
+		tst.w $466.w
+		beq.s	\@
+		move.w #0,$466
+
+; Mask interrupts
+;		move.w	#$2700,sr
+
+		ENDM
 
 ; -----------------------------------------------------------------------------
 
@@ -96,8 +105,11 @@ wait_for_vbl	MACRO
 ; Mask interrupts
 	move.w	#$2700,sr
 
-;	clr.w	$ffa1b
-;	clr.w	$ffa21
+;	move.l	$70.w,oldvbl		; store old VBL
+	move.l	#vbl,$70.w		; steal VBL
+
+; Unmask interrupts
+	move.w	#$2300,sr
 
 ; Get video mode and store it for lated
 	move.b	$ff8260,previous_video_mode
@@ -131,19 +143,45 @@ wait_for_vbl	MACRO
 	move.l d0,$ff8200
 
 ; -- main loop
+again:
+
+	move.l #200,d5			; lines per block
+	move.l #200,d6
+
+	lea bitmap,a0
+	move.l a0,d4
+
+	moveq #0,d2
+	moveq #0,d1
 
 main_loop:
-	bsr update_bgnd
-	swap_buffers
-	bsr music+8			; update music
-
-; Ummask interrupts
-	move.w #$2300,sr
-
-	wait_for_vbl
-
 ; Mask interrupts
-	move.w #$2700,sr
+;	move.w #$2700,sr
+
+	bchg #0,d2
+	beq swap_addr
+
+	move.l screen1_ptr,d0
+	bra.s swap_exit
+swap_addr:
+	move.l screen2_ptr,d0
+swap_exit:
+	add.l #(4*2),d0
+
+	tst d6
+	beq again
+	sub.l #1,d6
+	beq again
+
+;	bchg #0,d1
+;	beq skip_update_bgnd
+
+	bsr update_bgnd
+
+;skip_update_bgnd:
+
+	swap_buffers
+	wait_for_vbl
 
 ; check space key
 	cmp.b #$39,$fffc02
@@ -167,7 +205,7 @@ main_loop:
 ; Restore vram pointer
 	move.l previous_video_ptr,$ff8200
 
-; Ummask interrupts
+; Unmask interrupts
 	move.w #$2300,sr
 
 ; Enter USER mode
@@ -180,27 +218,23 @@ main_loop:
 	trap #1
 
 ; -----------------------------------------------------------------------------
+vbl:
+; Unmask interrupts
+	move.w #$2300,sr
+
+	bsr	music+8			; call music
+;	move.l oldvbl(pc),-(sp)		; go to old vector
+	addq.w #1,$466.w
+
+; Mask interrupts
+;	move.w #$2700,sr
+
+	rte
+
+oldvbl:	ds.l 1
+
 
 update_bgnd:
-	move.l #200,d6			; iters
-	move.l #200,d5			; lines per block
-
-	lea bitmap,a0
-	move.l a0,d4
-
-	moveq #0,d2
-
-loop:
-	bchg #0,d2
-	beq swap_addr
-
-	move.l screen1_ptr,d0
-	bra.s swap_exit
-swap_addr:
-	move.l screen2_ptr,d0
-swap_exit:
-	add.l #(4*2),d0
-
 	move.l d0,dst_addr
 
 	move.l d4,src_addr
@@ -228,7 +262,6 @@ swap_exit:
 	move.b #%11000000,line_num	; run (BUSY | HOG)
 
 	rts
-
 
 music:			incbin "assets\1.snd"
 
