@@ -1,3 +1,5 @@
+; set tabstop=8
+
 halftone:		equ $ff8a00	; 16 halftone RAM registers
 
 src_x_inc:		equ $ff8a20	; source x increment
@@ -143,19 +145,31 @@ wait_for_vbl	MACRO
 	move.l d0,$ff8200
 
 ; -- main loop
-again:
 
-	move.l #200,d5			; lines per block
-	move.l #200,d6
+	moveq #0,d3			; scroller direction
 
 	lea bitmap,a0
 	move.l a0,d4
 
+again:
+	move.l #200,d5			; lines per block
+	move.l #200,d6
+
 	moveq #0,d2
 
+	bchg #0,d3;			; flip scroller direction
 main_loop:
 ; Mask interrupts
 ;	move.w #$2700,sr
+
+	tas line_num
+;	nop
+	bmi blitter_busy
+
+;	or.b #$80,line_num
+;	bset.b #7,line_num
+;	nop
+;	bne blitter_busy
 
 	bchg #0,d2
 	beq swap_addr
@@ -167,10 +181,17 @@ swap_addr:
 swap_exit:
 	add.l #(4*2),d0
 
-blitter_loop:
+	move.l d4,src_addr
+
+	tst d3
+	beq.s scroll_down
+	addi.l #160,d4			; source goes down 1 line
+	bra.s set_direction_end
+scroll_down:
+	subi.l #160,d4			; source goes up 1 line
+set_direction_end:
+
 	bsr update_bgnd
-	cmp #0,d1
-	beq.s didnt_happen
 
 	swap_buffers
 
@@ -179,7 +200,7 @@ blitter_loop:
 	sub.l #1,d6
 	beq again
 
-didnt_happen:
+blitter_busy:
 	wait_for_vbl
 
 ; check space key
@@ -232,32 +253,10 @@ vbl:
 
 oldvbl:	ds.l 1
 
-
-
-; TODO: return a flag if blitter was busy and:
-;					don't swap_buffers;
-;					don't update position;
-;					don't decrement restart counter
-
-; returns d1 = 0 if didn't happen
-; d1 is not 0 otherwise
 update_bgnd:
-;	tas line_num
-;	nop
-;	bmi.s blitter_busy
-
-	or.b #$80,line_num
-	bset.b #7,line_num
-	nop
-	bne.s blitter_busy
-
 	move.l d0,dst_addr
 
-	move.l d4,src_addr
-
 	move.w #72,words_per_line_count
-
-	addi.l #160,d4			; source goes down 1 line
 
 	move.w d5,lines_per_block
 
@@ -276,12 +275,6 @@ update_bgnd:
 	move.b #0,skew
 
 	move.b #%10000000,line_num	; run (BUSY)
-
-	moveq #-1,d1
-	rts
-
-blitter_busy:
-	moveq #0,d1
 	rts
 
 music:			incbin "assets\1.snd"
