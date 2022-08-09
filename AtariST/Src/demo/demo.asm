@@ -22,6 +22,18 @@ op:			equ $ff8a3b	; logical operation
 line_num:		equ $ff8a3c
 skew:			equ $ff8a3d	; source shift
 
+; Inputs:
+; d0 - destination address
+; d5 - lines per block
+; Outputs:
+; None
+;Corrupts:
+; BLiTTER counters
+update_bgnd	MACRO
+		move.l d0,dst_addr
+		move.w d5,lines_per_block
+		move.b #%10000000,line_num	; run (BUSY)
+		ENDM
 
 ; Inputs:
 ; d0 = screen_ptr
@@ -146,6 +158,28 @@ wait_for_vbl	MACRO
 
 ; -- main loop
 
+; Setup BLiTTER
+	move.w #$ffff,endmask1
+	move.w #$ffff,endmask2
+	move.w #$ffff,endmask3
+
+	move.w #2,src_x_inc		; offset to the next word in bytes
+;	move.w #9*2,src_y_inc		; offset from the last word to the first word in bytes
+	move.w #0,src_y_inc		; offset from the last word to the first word in bytes
+
+	move.w #2,dst_x_inc		; offset to the next word in bytes
+;	move.w #9*2,dst_y_inc		; offset from the last word to the first words in bytes
+	move.w #0,dst_y_inc		; offset from the last word to the first words in bytes
+
+;	move.w #72,words_per_line_count
+	move.w #80,words_per_line_count
+
+	move.b #2,hop			; source
+	move.b #3,op			; source
+	move.b #0,skew
+
+; -------------
+
 	moveq #0,d3			; scroller direction
 
 	lea bitmap,a0
@@ -163,13 +197,8 @@ main_loop:
 ;	move.w #$2700,sr
 
 	tas line_num
-;	nop
+	nop
 	bmi blitter_busy
-
-;	or.b #$80,line_num
-;	bset.b #7,line_num
-;	nop
-;	bne blitter_busy
 
 	bchg #0,d2
 	beq swap_addr
@@ -179,7 +208,7 @@ main_loop:
 swap_addr:
 	move.l screen2_ptr,d0
 swap_exit:
-	add.l #(4*2),d0
+;	add.l #(4*2),d0
 
 	move.l d4,src_addr
 
@@ -191,9 +220,11 @@ scroll_down:
 	subi.l #160,d4			; source goes up 1 line
 set_direction_end:
 
-	bsr update_bgnd
+	update_bgnd
 
 	swap_buffers
+
+	wait_for_vbl
 
 	tst d6
 	beq again
@@ -252,30 +283,6 @@ vbl:
 	rte
 
 oldvbl:	ds.l 1
-
-update_bgnd:
-	move.l d0,dst_addr
-
-	move.w #72,words_per_line_count
-
-	move.w d5,lines_per_block
-
-	move.w #2,src_x_inc		; offset to the next word in bytes
-	move.w #9*2,src_y_inc		; offset from the last word to the first word in bytes
-
-	move.w #2,dst_x_inc		; offset to the next word in bytes
-	move.w #9*2,dst_y_inc		; offset from the last word to the first words in bytes
-
-	move.w #$ffff,endmask1
-	move.w #$ffff,endmask2
-	move.w #$ffff,endmask3
-
-	move.b #2,hop			; source
-	move.b #3,op			; source
-	move.b #0,skew
-
-	move.b #%10000000,line_num	; run (BUSY)
-	rts
 
 music:			incbin "assets\1.snd"
 
