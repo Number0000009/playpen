@@ -152,7 +152,6 @@ again:
 	move.l a0,d4
 
 	moveq #0,d2
-	moveq #0,d1
 
 main_loop:
 ; Mask interrupts
@@ -168,19 +167,19 @@ swap_addr:
 swap_exit:
 	add.l #(4*2),d0
 
+blitter_loop:
+	bsr update_bgnd
+	cmp #0,d1
+	beq.s didnt_happen
+
+	swap_buffers
+
 	tst d6
 	beq again
 	sub.l #1,d6
 	beq again
 
-;	bchg #0,d1
-;	beq skip_update_bgnd
-
-	bsr update_bgnd
-
-;skip_update_bgnd:
-
-	swap_buffers
+didnt_happen:
 	wait_for_vbl
 
 ; check space key
@@ -234,7 +233,24 @@ vbl:
 oldvbl:	ds.l 1
 
 
+
+; TODO: return a flag if blitter was busy and:
+;					don't swap_buffers;
+;					don't update position;
+;					don't decrement restart counter
+
+; returns d1 = 0 if didn't happen
+; d1 is not 0 otherwise
 update_bgnd:
+;	tas line_num
+;	nop
+;	bmi.s blitter_busy
+
+	or.b #$80,line_num
+	bset.b #7,line_num
+	nop
+	bne.s blitter_busy
+
 	move.l d0,dst_addr
 
 	move.l d4,src_addr
@@ -259,8 +275,13 @@ update_bgnd:
 	move.b #3,op			; source
 	move.b #0,skew
 
-	move.b #%11000000,line_num	; run (BUSY | HOG)
+	move.b #%10000000,line_num	; run (BUSY)
 
+	moveq #-1,d1
+	rts
+
+blitter_busy:
+	moveq #0,d1
 	rts
 
 music:			incbin "assets\1.snd"
