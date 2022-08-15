@@ -24,13 +24,15 @@ skew:			equ $ff8a3d	; source shift
 
 ; Inputs:
 ; d0 - destination address
+; d4 - source address
 ; d5 - lines per block
 ; Outputs:
 ; None
-;Corrupts:
+; Corrupts:
 ; BLiTTER counters
 update_bgnd	MACRO
 		move.l d0,dst_addr
+		move.l d4,src_addr
 		move.w d5,lines_per_block
 		move.b #%10000000,line_num	; run (BUSY)
 		ENDM
@@ -164,14 +166,11 @@ wait_for_vbl	MACRO
 	move.w #$ffff,endmask3
 
 	move.w #2,src_x_inc		; offset to the next word in bytes
-;	move.w #9*2,src_y_inc		; offset from the last word to the first word in bytes
 	move.w #0,src_y_inc		; offset from the last word to the first word in bytes
 
 	move.w #2,dst_x_inc		; offset to the next word in bytes
-;	move.w #9*2,dst_y_inc		; offset from the last word to the first words in bytes
 	move.w #0,dst_y_inc		; offset from the last word to the first words in bytes
 
-;	move.w #72,words_per_line_count
 	move.w #80,words_per_line_count
 
 	move.b #2,hop			; source
@@ -180,21 +179,20 @@ wait_for_vbl	MACRO
 
 ; -------------
 
-	moveq #0,d3			; scroller direction
+	moveq #0,d3			; pos_y
 
-	lea bitmap,a0
-	move.l a0,d4
+	moveq #0,d2			; back buffer or front buffer
 
 again:
-	move.l #200,d5			; lines per block
-	move.l #200,d6
+; setup sine table
+	lea sine_tbl,a0
+	move.l #200,d6			; when to reset sine_tbl pointer
 
-	moveq #0,d2
-
-	bchg #0,d3;			; flip scroller direction
 main_loop:
 ; Mask interrupts
 ;	move.w #$2700,sr
+
+	move.l #200,d5			; lines per block
 
 	tas line_num
 	nop
@@ -208,17 +206,12 @@ main_loop:
 swap_addr:
 	move.l screen2_ptr,d0
 swap_exit:
-;	add.l #(4*2),d0
 
-	move.l d4,src_addr
+	move.l #bitmap,d4
 
-	tst d3
-	beq.s scroll_down
-	addi.l #160,d4			; source goes down 1 line
-	bra.s set_direction_end
-scroll_down:
-	subi.l #160,d4			; source goes up 1 line
-set_direction_end:
+; get_sine
+	move.w (a0)+,d3
+	add.l d3,d4
 
 	update_bgnd
 
@@ -305,208 +298,204 @@ bitmap:			incbin "assets\dw.raw"
 				incbin "assets\sm.raw"
 palette:		incbin "assets\dw.pal"
 
-sin_tbl:
-; 200
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 1
-				db 2
-				db 2
-				db 2
-				db 2
-				db 2
-				db 2
-				db 2
-				db 2
-				db 2
-				db 2
-				db 2
-				db 3
-				db 3
-				db 3
-				db 3
-				db 3
-				db 3
-				db 3
-				db 3
-				db 3
-				db 4
-				db 4
-				db 4
-				db 4
-				db 4
-				db 4
-				db 4
-				db 4
-				db 4
-				db 4
-				db 5
-				db 5
-				db 5
-				db 5
-				db 5
-				db 5
-				db 5
-				db 5
-				db 5
-				db 5
-				db 5
-				db 5
-				db 5
-				db 5
-				db 0
+sine_tbl:
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 800
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 640
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 480
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 320
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 160
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
+        dw 0
