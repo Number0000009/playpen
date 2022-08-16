@@ -166,12 +166,12 @@ wait_for_vbl	MACRO
 	move.w #$ffff,endmask3
 
 	move.w #2,src_x_inc		; offset to the next word in bytes
-	move.w #0,src_y_inc		; offset from the last word to the first word in bytes
+	move.w #(9*2),src_y_inc		; offset from the last word to the first word in bytes
 
 	move.w #2,dst_x_inc		; offset to the next word in bytes
-	move.w #0,dst_y_inc		; offset from the last word to the first words in bytes
+	move.w #(9*2),dst_y_inc		; offset from the last word to the first words in bytes
 
-	move.w #80,words_per_line_count
+	move.w #72,words_per_line_count
 
 	move.b #2,hop			; source
 	move.b #3,op			; source
@@ -211,6 +211,7 @@ main_loop:
 swap_addr:
 	move.l screen2_ptr,d0
 swap_exit:
+	add.l #(4*2),d0
 
 ; get_sine
 	move.w (a0)+,d3
