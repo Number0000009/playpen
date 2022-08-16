@@ -180,15 +180,18 @@ wait_for_vbl	MACRO
 ; -------------
 
 	moveq #0,d3			; pos_y
-
 	moveq #0,d2			; back buffer or front buffer
+	moveq #0,d1			; scrolling up or down
+
+	move.l #bitmap,d4
 
 again:
 ; setup sine table
 	lea sine_tbl,a0
 
 	moveq #74,d6			; when to reset sine_tbl pointer
-	move.l #bitmap,d4
+
+	bchg #0,d1
 
 main_loop:
 ; Mask interrupts
@@ -211,7 +214,15 @@ swap_exit:
 
 ; get_sine
 	move.w (a0)+,d3
+
+	tst d1
+	beq scroll_down
+scroll_up:
 	add.l d3,d4
+	bra.s scroll_direction_set
+scroll_down:
+	sub.l d3,d4
+scroll_direction_set:
 
 	update_bgnd
 
