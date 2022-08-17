@@ -206,10 +206,10 @@ main_loop:
 	bchg #0,d2
 	beq swap_addr
 
-	move.l screen1_ptr,d0
+	move.l screen2_ptr,d0
 	bra.s swap_exit
 swap_addr:
-	move.l screen2_ptr,d0
+	move.l screen1_ptr,d0
 swap_exit:
 	add.l #(4*2),d0
 
@@ -289,7 +289,7 @@ vbl:
 
 oldvbl:	ds.l 1
 
-music:			incbin "assets\1.snd"
+music:			incbin "assets\music.snd"
 
 	SECTION BSS
 _alignment:	ds.b $ff
@@ -306,9 +306,9 @@ previous_video_mode:	ds.b 1
 
 
 	SECTION DATA
-bitmap:			incbin "assets\dw.raw"
-				incbin "assets\sm.raw"
-palette:		incbin "assets\dw.pal"
+bitmap:			incbin "assets\top.raw"
+				incbin "assets\bottom.raw"
+palette:		incbin "assets\palette.pal"
 
 sine_tbl:
 		dw 0
