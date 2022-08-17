@@ -211,6 +211,7 @@ main_loop:
 swap_addr:
 	move.l screen1_ptr,d0
 swap_exit:
+
 	add.l #(4*2),d0
 
 ; get_sine
@@ -228,6 +229,20 @@ scroll_direction_set:
 	update_bgnd
 
 	swap_buffers
+
+; --- draw sides
+	move.l screen1_ptr,a1
+	move.l screen2_ptr,a2
+
+	moveq #0,d5
+	move.w side_y,d5
+	add.w #160,side_y
+	add.l d5,a1
+	add.l d5,a2
+	move.w #$ffff,(a1)
+	move.w #$ffff,(a2)
+
+; ---
 
 	wait_for_vbl
 
@@ -377,3 +392,5 @@ sine_tbl:
 		dw 0
 		dw 0
 		dw 0
+
+side_y:			dw 0
