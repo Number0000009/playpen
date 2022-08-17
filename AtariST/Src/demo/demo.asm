@@ -179,7 +179,7 @@ wait_for_vbl	MACRO
 
 ; -------------
 
-	moveq #0,d3			; pos_y
+;	moveq #0,d3			; pos_y
 	moveq #0,d2			; back buffer or front buffer
 	moveq #0,d1			; scrolling up or down
 
@@ -189,7 +189,7 @@ again:
 ; setup sine table
 	lea sine_tbl,a0
 
-	moveq #74,d6			; when to reset sine_tbl pointer
+	moveq #66,d6			; when to reset sine_tbl pointer
 
 	bchg #0,d1
 
