@@ -179,7 +179,6 @@ wait_for_vbl	MACRO
 
 ; -------------
 
-;	moveq #0,d3			; pos_y
 	moveq #0,d2			; back buffer or front buffer
 	moveq #0,d1			; scrolling up or down
 
@@ -231,17 +230,43 @@ scroll_direction_set:
 	swap_buffers
 
 ; --- draw sides
+
+; --- prepare sides pointers
 	move.l screen1_ptr,a1
 	move.l screen2_ptr,a2
+	lea (320/2-8)+(199*160)(a1),a4
+	lea (320/2-8)+(199*160)(a2),a5
+	lea bitmap,a3
+	lea (320/2-8)(a3),a3
+; ---
 
+; Left side
 	moveq #0,d5
 	move.w side_y,d5
+
+	cmp.w #200*160,d5
+	beq.s sides_finished
+
 	add.w #160,side_y
 	add.l d5,a1
 	add.l d5,a2
-	move.w #$ffff,(a1)
-	move.w #$ffff,(a2)
+	add.l d5,a3
+	move.l (a3),(a1)+
+	move.l (a3)+,(a2)+
+	move.l (a3),(a1)+
+	move.l (a3),(a2)+
 
+; Right side
+	lea -4(a3),a3
+
+	sub.l d5,a4
+	sub.l d5,a5
+	move.l (a3),(a4)+
+	move.l (a3)+,(a5)+
+	move.l (a3),(a4)+
+	move.l (a3),(a5)+
+
+sides_finished:
 ; ---
 
 	wait_for_vbl
