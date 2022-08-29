@@ -4,7 +4,7 @@ import math
 import curses
 import time
 
-stdscr = curses.initscr()
+#stdscr = curses.initscr()
 
 i = 0
 j = 0
@@ -20,21 +20,21 @@ while j < 632:
 #    stdscr.clear()
 
     i += 0.01
-    x = int(math.sin(i*5 + 3.14/2)*30 + 100)
-    y = int(math.cos(i*6)*25 + 25)
+    x = int(math.sin(i*5 + 3.14/2)*96 + 160)
+    y = int(math.cos(i*6)*90 + 100)
 
-#    print(x)
-#    print(y)
+    print(x)
+    print(y)
     table[k] = x
     k += 1
     table[k] = y
     k += 1
 
-    stdscr.addstr(y, x, '.')
+#    stdscr.addstr(y, x, '.')
 
-    stdscr.refresh()
+#    stdscr.refresh()
 
-    time.sleep(0.05)
+#    time.sleep(0.05)
     j += 1
 
 f = open('table.bin', 'wb')

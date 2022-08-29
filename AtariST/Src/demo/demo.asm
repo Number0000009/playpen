@@ -184,6 +184,9 @@ wait_for_vbl	MACRO
 
 	move.l #bitmap,d4
 
+; setup Lissajous table
+	lea lissajous_table,a6
+
 again:
 ; setup sine table
 	lea sine_tbl,a0
@@ -225,7 +228,7 @@ scroll_down:
 	sub.l d3,d4
 scroll_direction_set:
 
-	update_bgnd
+;	update_bgnd
 
 	swap_buffers
 
@@ -267,6 +270,56 @@ scroll_direction_set:
 	move.l (a3),(a5)+
 
 sides_finished:
+; ---
+; Lissajous
+
+; corrupts d0, d1, d2, a0, a5
+
+; save d0, d1, d2
+	lea stack,a5
+	movem.l d0-d2,-(a5)
+
+	move.l screen1_ptr,a1
+	move.l screen2_ptr,a2
+
+	moveq #0,d0
+	moveq #0,d1
+
+	move.b (a6),d0		; x
+	add.l #1,a6
+	move.b (a6),d1		; y
+	add.l #1,a6
+
+loop:
+; y*160 = y * 2^7 + 32*y => y<<7 + y<<5
+	lsl.w #5,d1
+	add.w d1,a1
+	lsl.w #2,d1
+	add.w d1,a1
+
+; x
+	move d0,d2
+; d2/16 * 8 and drop last 3 bits
+
+	lsr.w #1,d2
+	andi.b #$f8,d2
+
+; d2-th word
+
+	add.l d2,a1
+
+; x-th bit
+
+; calculate the remainder
+; x % 2^n == x & (2^n - 1) => x % 2^4 == x & (2^4 - 1) => x % 16 = x & 15
+
+	andi.b #15,d0
+
+	move.w #%1000000000000000,d1
+	lsr.w d0,d1
+	or.w d1,(a1)
+
+	movem.l (a5)+,d0-d2
 ; ---
 
 	wait_for_vbl
@@ -327,12 +380,12 @@ vbl:
 
 	rte
 
-oldvbl:	ds.l 1
+oldvbl:			ds.l 1
 
 music:			incbin "assets\music.snd"
 
 	SECTION BSS
-_alignment:	ds.b $ff
+_alignment:		ds.b $ff
 _screen1:		ds.b 32000
 _screen2:		ds.b 32000
 
@@ -344,11 +397,16 @@ previous_video_ptr:	ds.l 1
 previous_palette:	ds.w 16
 previous_video_mode:	ds.b 1
 
+	align 2
+			ds.l 4
+stack:			; grows up
 
 	SECTION DATA
 bitmap:			incbin "assets\top.raw"
-				incbin "assets\bottom.raw"
+			incbin "assets\bottom.raw"
 palette:		incbin "assets\palette.pal"
+
+lissajous_table:	incbin "assets\table.bin"
 
 sine_tbl:
 		dw 0
@@ -418,4 +476,4 @@ sine_tbl:
 		dw 0
 		dw 0
 
-side_y:			dw 0
+side_y:		dw 0
