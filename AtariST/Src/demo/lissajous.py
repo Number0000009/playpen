@@ -13,15 +13,15 @@ k = 0
 table = bytearray()
 
 for _ in range(632 * 2):
-	table.append(0)
+    table.append(0)
 
 while j < 632:
 #while True:
 #    stdscr.clear()
 
     i += 0.01
-    x = int(math.sin(i*5 + 3.14/2)*96 + 160)
-    y = int(math.cos(i*6)*90 + 100)
+    x = int(math.sin(i*5 + 3.14/2)*30 + 160)
+    y = int(math.cos(i*6)*60 + 60)
 
     print(x)
     print(y)

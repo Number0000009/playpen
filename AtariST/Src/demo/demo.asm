@@ -228,7 +228,7 @@ scroll_down:
 	sub.l d3,d4
 scroll_direction_set:
 
-;	update_bgnd
+	update_bgnd
 
 	swap_buffers
 
@@ -273,7 +273,7 @@ sides_finished:
 ; ---
 ; Lissajous
 
-; corrupts d0, d1, d2, a0, a5
+; corrupts d0, d1, d2, a1, a2, a3, a4, a5
 
 ; save d0, d1, d2
 	lea stack,a5
@@ -290,34 +290,66 @@ sides_finished:
 	move.b (a6),d1		; y
 	add.l #1,a6
 
-loop:
 ; y*160 = y * 2^7 + 32*y => y<<7 + y<<5
 	lsl.w #5,d1
 	add.w d1,a1
+	add.w d1,a2
 	lsl.w #2,d1
 	add.w d1,a1
+	add.w d1,a2
 
-; x
-	move d0,d2
-; d2/16 * 8 and drop last 3 bits
+;; x
+;	move d0,d2
+;; d2/16 * 8 and drop last 3 bits
 
-	lsr.w #1,d2
-	andi.b #$f8,d2
+;	lsr.w #1,d2
+;	andi.b #$f8,d2
 
-; d2-th word
+;; d2-th word
 
-	add.l d2,a1
+;	add.l d2,a1
 
-; x-th bit
+;; x-th bit
 
-; calculate the remainder
-; x % 2^n == x & (2^n - 1) => x % 2^4 == x & (2^4 - 1) => x % 16 = x & 15
+;; calculate the remainder
+;; x % 2^n == x & (2^n - 1) => x % 2^4 == x & (2^4 - 1) => x % 16 = x & 15
 
-	andi.b #15,d0
+;	andi.b #15,d0
 
-	move.w #%1000000000000000,d1
-	lsr.w d0,d1
-	or.w d1,(a1)
+;	move.w #%1000000000000000,d1
+;	lsr.w d0,d1
+;	or.w d1,(a1)
+
+	lea 2*4(a1),a1
+	lea 2*4(a2),a2
+
+	lea happy,a3		; 24 words = 12 registers
+	lea birthday,a4		; 32 words = 16 registers
+
+	rept 32
+	rept 12
+	move.l (a3)+,d0
+	or.l d0,(a1)+
+	or.l d0,(a2)+
+	endr
+
+	lea.l 160-(12*4)(a1),a1
+	lea.l 160-(12*4)(a2),a2
+	endr
+
+	lea -((160-(24*4))*32)+(2*16)(a1),a1
+	lea -((160-(24*4))*32)+(2*16)(a2),a2
+
+	rept 32
+	rept 16
+	move.l (a4)+,d0
+	or.l d0,(a1)+
+	or.l d0,(a2)+
+	endr
+
+	lea.l 160-(16*4)(a1),a1
+	lea.l 160-(16*4)(a2),a2
+	endr
 
 	movem.l (a5)+,d0-d2
 ; ---

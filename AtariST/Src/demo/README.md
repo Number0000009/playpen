@@ -1,6 +1,6 @@
 TODO:
-1) Add 'Happy Birthday!' sprites flying by sin/cos with shadow
-Probably this should be done with CPU as BLiTTER is already 146% busy
+1) Add 'Happy Birthday!' sprites flying by sin/cos
+2) Add mask
 
 DONE 1) Music player + music. Requires ICE! unpacker
 DONE 2) Make background scroller accelerate/decelerate by sin
