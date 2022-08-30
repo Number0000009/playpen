@@ -67,6 +67,12 @@ wait_for_vbl	MACRO
 		beq.s	\@
 		move.w #0,$466
 
+
+;		move.w $468.w,d7
+;\@
+;		cmp.w $468.w,d7
+;		beq.s	\@
+
 ; Mask interrupts
 ;		move.w	#$2700,sr
 
@@ -186,8 +192,13 @@ wait_for_vbl	MACRO
 
 ; setup Lissajous table
 	lea lissajous_table,a6
+	lea lissajous_table_end,a5
 
 again:
+
+; Mask interrupts
+;	move.w #$2700,sr
+
 ; setup sine table
 	lea sine_tbl,a0
 
@@ -196,14 +207,13 @@ again:
 	bchg #0,d1
 
 main_loop:
-; Mask interrupts
-;	move.w #$2700,sr
-
-	move.l #200,d5			; lines per block
+blitter_busy:
 
 	tas line_num
 	nop
 	bmi blitter_busy
+
+	move.l #200,d5			; lines per block
 
 	bchg #0,d2
 	beq swap_addr
@@ -230,9 +240,9 @@ scroll_direction_set:
 
 	update_bgnd
 
-	swap_buffers
-
 ; --- draw sides
+
+	move.l a5,-(sp)
 
 ; --- prepare sides pointers
 	move.l screen1_ptr,a1
@@ -270,14 +280,18 @@ scroll_direction_set:
 	move.l (a3),(a5)+
 
 sides_finished:
+
+	move.l (sp)+,a5
+
 ; ---
+
 ; Lissajous
 
 ; corrupts d0, d1, d2, a1, a2, a3, a4, a5
 
 ; save d0, d1, d2
-	lea stack,a5
-	movem.l d0-d2,-(a5)
+;	lea stack,sp
+	movem.l d0-d2,-(sp)
 
 	move.l screen1_ptr,a1
 	move.l screen2_ptr,a2
@@ -298,21 +312,22 @@ sides_finished:
 	add.w d1,a1
 	add.w d1,a2
 
-;; x
-;	move d0,d2
-;; d2/16 * 8 and drop last 3 bits
+; x
+	move d0,d2
+; d2/16 * 8 and drop last 3 bits
 
-;	lsr.w #1,d2
-;	andi.b #$f8,d2
+	lsr.w #1,d2
+	andi.b #$f8,d2
 
-;; d2-th word
+; d2-th word
 
-;	add.l d2,a1
+	add.l d2,a1
+	add.l d2,a2
 
-;; x-th bit
+; x-th bit
 
-;; calculate the remainder
-;; x % 2^n == x & (2^n - 1) => x % 2^4 == x & (2^4 - 1) => x % 16 = x & 15
+; calculate the remainder
+; x % 2^n == x & (2^n - 1) => x % 2^4 == x & (2^4 - 1) => x % 16 = x & 15
 
 ;	andi.b #15,d0
 
@@ -324,7 +339,6 @@ sides_finished:
 	lea 2*4(a2),a2
 
 	lea happy,a3		; 24 words = 12 registers
-	lea birthday,a4		; 32 words = 16 registers
 
 	rept 32
 	rept 12
@@ -337,12 +351,57 @@ sides_finished:
 	lea.l 160-(12*4)(a2),a2
 	endr
 
-	lea -((160-(24*4))*32)+(2*16)(a1),a1
-	lea -((160-(24*4))*32)+(2*16)(a2),a2
+; Birthday
+	move.l screen1_ptr,a1
+	move.l screen2_ptr,a2
+
+	moveq #0,d0
+	moveq #0,d1
+
+	move.b (a5),d1		; y
+	sub.l #1,a5
+	move.b (a5),d0		; x
+	sub.l #1,a5
+
+; y*160 = y * 2^7 + 32*y => y<<7 + y<<5
+	lsl.w #5,d1
+	add.w d1,a1
+	add.w d1,a2
+	lsl.w #2,d1
+	add.w d1,a1
+	add.w d1,a2
+
+; x
+	move d0,d2
+; d2/16 * 8 and drop last 3 bits
+
+	lsr.w #1,d2
+	andi.b #$f8,d2
+
+; d2-th word
+
+	add.l d2,a1
+	add.l d2,a2
+
+; x-th bit
+
+; calculate the remainder
+; x % 2^n == x & (2^n - 1) => x % 2^4 == x & (2^4 - 1) => x % 16 = x & 15
+
+;	andi.b #15,d0
+
+;	move.w #%1000000000000000,d1
+;	lsr.w d0,d1
+;	or.w d1,(a1)
+
+	lea 2*4(a1),a1
+	lea 2*4(a2),a2
+
+	lea birthday,a3		; 32 words = 16 registers
 
 	rept 32
 	rept 16
-	move.l (a4)+,d0
+	move.l (a3)+,d0
 	or.l d0,(a1)+
 	or.l d0,(a2)+
 	endr
@@ -351,17 +410,21 @@ sides_finished:
 	lea.l 160-(16*4)(a2),a2
 	endr
 
-	movem.l (a5)+,d0-d2
-; ---
+	movem.l (sp)+,d0-d2
 
+; Unmask interrupts
+;	move.w	#$2300,sr
+
+; ---
 	wait_for_vbl
+
+	swap_buffers
 
 	tst d6
 	beq again
 	sub.l #1,d6
 	beq again
 
-blitter_busy:
 	wait_for_vbl
 
 ; check space key
@@ -401,7 +464,7 @@ blitter_busy:
 ; -----------------------------------------------------------------------------
 vbl:
 ; Unmask interrupts
-	move.w #$2300,sr
+;	move.w #$2300,sr
 
 	bsr	music+8			; call music
 ;	move.l oldvbl(pc),-(sp)		; go to old vector
@@ -412,7 +475,7 @@ vbl:
 
 	rte
 
-oldvbl:			ds.l 1
+;oldvbl:			ds.l 1
 
 music:			incbin "assets\music.snd"
 
@@ -421,7 +484,6 @@ _alignment:		ds.b $ff
 _screen1:		ds.b 32000
 _screen2:		ds.b 32000
 
-
 	align 2
 screen1_ptr:		ds.l 1
 screen2_ptr:		ds.l 1
@@ -429,9 +491,9 @@ previous_video_ptr:	ds.l 1
 previous_palette:	ds.w 16
 previous_video_mode:	ds.b 1
 
-	align 2
-			ds.l 4
-stack:			; grows up
+;	align 2
+;			ds.l 4
+;stack:			; grows up
 
 	SECTION DATA
 bitmap:			incbin "assets\top.raw"
@@ -439,6 +501,7 @@ bitmap:			incbin "assets\top.raw"
 palette:		incbin "assets\palette.pal"
 
 lissajous_table:	incbin "assets\table.bin"
+lissajous_table_end:
 
 happy:			incbin "assets\happy.raw"
 birthday:		incbin "assets\birthday.raw"
