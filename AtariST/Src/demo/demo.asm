@@ -335,20 +335,17 @@ sides_finished:
 ;	lsr.w d0,d1
 ;	or.w d1,(a1)
 
-	lea 2*4(a1),a1
-	lea 2*4(a2),a2
+	lea happy,a3		; 12 words = 6 registers
 
-	lea happy,a3		; 24 words = 12 registers
-
-	rept 32
-	rept 12
+	rept 16
+	rept 6
 	move.l (a3)+,d0
 	or.l d0,(a1)+
 	or.l d0,(a2)+
 	endr
 
-	lea.l 160-(12*4)(a1),a1
-	lea.l 160-(12*4)(a2),a2
+	lea.l 160-(6*4)(a1),a1
+	lea.l 160-(6*4)(a2),a2
 	endr
 
 ; Birthday
@@ -394,20 +391,17 @@ sides_finished:
 ;	lsr.w d0,d1
 ;	or.w d1,(a1)
 
-	lea 2*4(a1),a1
-	lea 2*4(a2),a2
+	lea birthday,a3		; 16 words = 8 registers
 
-	lea birthday,a3		; 32 words = 16 registers
-
-	rept 32
 	rept 16
+	rept 8
 	move.l (a3)+,d0
 	or.l d0,(a1)+
 	or.l d0,(a2)+
 	endr
 
-	lea.l 160-(16*4)(a1),a1
-	lea.l 160-(16*4)(a2),a2
+	lea.l 160-(8*4)(a1),a1
+	lea.l 160-(8*4)(a2),a2
 	endr
 
 	movem.l (sp)+,d0-d2
