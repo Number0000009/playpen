@@ -408,6 +408,9 @@ palette:		incbin "assets\palette.pal"
 
 lissajous_table:	incbin "assets\table.bin"
 
+happy:			incbin "assets\happy.raw"
+birthday:		incbin "assets\birthday.raw"
+
 sine_tbl:
 		dw 0
 		dw 0
