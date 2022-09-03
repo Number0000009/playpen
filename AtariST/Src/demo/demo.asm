@@ -293,8 +293,21 @@ sides_finished:
 
 ; corrupts d0, d1, d2, d3, a1, a0, a1, a2, a3
 
-; save d0, d1, d2, d3
-	movem.l d0-d3/a0-a4,-(sp)
+; save d0, d1, d2, d3, a0, a1, a2, a3
+	movem.l d0-d3/a0-a3,-(sp)
+
+	add.w #1,(lissajous_pos)
+	cmp.w #631,(lissajous_pos)
+	ble lissajous_ok
+
+; re-init lissajous
+	move.w #0,(lissajous_pos)
+
+; setup Lissajous tables
+	lea lissajous_table,a6
+	lea lissajous_table_end,a5
+
+lissajous_ok:
 
 	move.l screen1_ptr,a1
 	move.l screen2_ptr,a2
@@ -306,8 +319,6 @@ sides_finished:
 	add.l #1,a6
 	move.b (a6),d1		; y
 	add.l #1,a6
-;	move.b #320/2+3,d0
-;	move.b #200/2,d1
 
 ; y*160 = y * 2^7 + 32*y => y<<7 + y<<5
 	lsl.w #5,d1
@@ -340,103 +351,26 @@ sides_finished:
 ; a2, screen2
 ; d0 - 0-16 bits shifted to the right
 
-; Shift orginal sprite into another sprite
-; First clean up the destination
-; TODO
-; Then copy the original sprite
-	lea happy,a0
-	lea happy_spr,a3
-
-	rept 16
-	rept 6
-	move.l (a0)+,d1
-	move.l d1,(a3)+
-	endr
-
-	lea (64/2)-(8*4)(a3),a3
-	endr
-
-; then shift it
-	cmp.b #0,d0
-	beq happy_output_original
-
-happy_next_phase:
-	lea happy_spr,a0
-
-; for each scanline
-	rept 16
-
-; for each of 4 planes
-	rept 4
-; shift 16 * 3 pixels of a plane one bit right
-	move.w (a0),d1
-	move.w 8(a0),d2
-	move.w 16(a0),d3
-;	move.w 24(a0),d4
-
-	roxr.w #1,d1
-	move.w d1,(a0)
-
-	roxr.w #1,d2
-	move.w d2,8(a0)
-
-	roxr.w #1,d3
-	move.w d3,16(a0)
-
-;	roxr.w #1,d4
-;	move.w d4,24(a0)
-
-; reset X
-	moveq #0,d1
-	roxr #1,d1
-
-	addq #2,a0
-	endr
-
-	lea.l 16(a0),a0
-	endr
-
-	subq #1,d0
-	bpl happy_next_phase
-
-happy_draw:
 ; draw shifted sprite
-	lea happy_spr,a0		; 48+16 pixels width => 4 words of 16 bits
+;	lea happy_spr,a0		; 48+16 pixels width => 4 words of 16 bits
+	lea happy,a0		; 48 pixels width
 
-;64//16*2 longs
+;;64//16*2 longs
+; 48//16*2 longs
 
 	rept 16
 	rept 6
+;	rept 8
 	move.l (a0)+,d0
-	move.l d0,(a1)+
-	move.l d0,(a2)+
+	or.l d0,(a1)+
+	or.l d0,(a2)+
 	endr
 
 	lea 160-(6*4)(a1),a1
 	lea 160-(6*4)(a2),a2
+;	lea 160-(8*4)(a1),a1
+;	lea 160-(8*4)(a2),a2
 	endr
-
-	bra birthday_sprite
-
-happy_output_original:
-; draw original sprite
-
-	lea happy,a3		; 48 pixels width
-
-;48//16*2 longs
-
-	rept 16
-	rept 6
-	move.l (a3)+,d0
-	move.l d0,(a1)+
-	move.l d0,(a2)+
-	endr
-
-	lea 160-(6*4)(a1),a1
-	lea 160-(6*4)(a2),a2
-	endr
-
-birthday_sprite:
 
 ; Birthday
 	move.l screen1_ptr,a1
@@ -475,11 +409,7 @@ birthday_sprite:
 ; calculate the remainder
 ; x % 2^n == x & (2^n - 1) => x % 2^4 == x & (2^4 - 1) => x % 16 = x & 15
 
-;	andi.b #15,d0
-
-;	move.w #%1000000000000000,d1
-;	lsr.w d0,d1
-;	or.w d1,(a1)
+	andi.b #15,d0
 
 	lea birthday,a3		; 16 words = 8 registers
 
@@ -494,7 +424,7 @@ birthday_sprite:
 	lea.l 160-(8*4)(a2),a2
 	endr
 
-	movem.l (sp)+,d0-d3/a0-a4
+	movem.l (sp)+,d0-d3/a0-a3
 
 ; Unmask interrupts
 	move.w	#$2300,sr
@@ -679,4 +609,5 @@ sine_tbl:
 		dc.w 0
 		dc.w 0
 
-side_y:		dc.w 0
+side_y:			dc.w 0
+lissajous_pos:		dc.w 0
