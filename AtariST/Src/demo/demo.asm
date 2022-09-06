@@ -105,9 +105,13 @@ wait_for_vbl	MACRO
 	clr.b	d0
 	move.l	d0,screen1_ptr
 
-	move.l	#_screen2,d0
-	clr.b	d0
-	move.l	d0,screen2_ptr
+;	lsr.w	#8,d0
+;	move.l	d0,$ff8200
+
+
+;	move.l	#_screen2,d0
+;	clr.b	d0
+;	move.l	d0,screen2_ptr
 
 ; Disable cursor
 	move.w	#0,-(sp)		; not needed
@@ -186,7 +190,7 @@ wait_for_vbl	MACRO
 
 ; -------------
 
-	moveq #0,d2			; back buffer or front buffer
+;	moveq #0,d2			; back buffer or front buffer
 	moveq #0,d1			; scrolling up or down
 
 	move.l #bitmap,d4
@@ -216,14 +220,14 @@ blitter_busy:
 
 	move.l #200,d5			; lines per block
 
-	bchg #0,d2
-	beq swap_addr
+;	bchg #0,d2
+;	beq swap_addr
 
-	move.l screen2_ptr,d0
-	bra.s swap_exit
-swap_addr:
+;	move.l screen2_ptr,d0
+;	bra.s swap_exit
+;swap_addr:
 	move.l screen1_ptr,d0
-swap_exit:
+;swap_exit:
 
 	add.l #(4*2),d0
 
@@ -250,9 +254,9 @@ scroll_direction_set:
 
 ; --- prepare sides pointers
 	move.l screen1_ptr,a1
-	move.l screen2_ptr,a2
+;	move.l screen2_ptr,a2
 	lea (320/2-8)+(199*160)(a1),a4
-	lea (320/2-8)+(199*160)(a2),a5
+;	lea (320/2-8)+(199*160)(a2),a5
 	lea bitmap,a3
 	lea (320/2-8)(a3),a3
 ; ---
@@ -266,29 +270,37 @@ scroll_direction_set:
 
 	add.w #160,side_y
 	add.l d5,a1
-	add.l d5,a2
+;	add.l d5,a2
 	add.l d5,a3
+;	move.l (a3),(a1)+
+;	move.l (a3)+,(a2)+
+;	move.l (a3),(a1)+
+;	move.l (a3),(a2)+
+
+	move.l (a3)+,(a1)+
 	move.l (a3),(a1)+
-	move.l (a3)+,(a2)+
-	move.l (a3),(a1)+
-	move.l (a3),(a2)+
 
 ; Right side
 	lea -4(a3),a3
 
 	sub.l d5,a4
-	sub.l d5,a5
+;	sub.l d5,a5
+;	move.l (a3),(a4)+
+;	move.l (a3)+,(a5)+
+;	move.l (a3),(a4)+
+;	move.l (a3),(a5)+
+
+	move.l (a3)+,(a4)+
 	move.l (a3),(a4)+
-	move.l (a3)+,(a5)+
-	move.l (a3),(a4)+
-	move.l (a3),(a5)+
+
 
 sides_finished:
 
 	move.l (sp)+,a5
 
 ; ---
-
+;	swap_buffers
+; ---
 ; Lissajous
 
 ; corrupts d0-d7, a1, a0, a1, a2, a3
@@ -310,7 +322,7 @@ sides_finished:
 lissajous_ok:
 
 	move.l screen1_ptr,a1
-	move.l screen2_ptr,a2
+;	move.l screen2_ptr,a2
 
 	moveq #0,d0
 	moveq #0,d1
@@ -323,10 +335,10 @@ lissajous_ok:
 ; y*160 = y * 2^7 + 32*y => y<<7 + y<<5
 	lsl.w #5,d1
 	add.w d1,a1
-	add.w d1,a2
+;	add.w d1,a2
 	lsl.w #2,d1
 	add.w d1,a1
-	add.w d1,a2
+;	add.w d1,a2
 
 ; x
 	move.l d0,d2
@@ -338,7 +350,7 @@ lissajous_ok:
 ; d2-th word
 
 	add.l d2,a1
-	add.l d2,a2
+;	add.l d2,a2
 
 ; x-th bit
 
@@ -368,46 +380,46 @@ lissajous_ok:
 ;	or.l d0,(a2)+
 	movem.l (a0)+,d0-d7
 	or.l d0,(a1)+
-	or.l d0,(a2)+
+;	or.l d0,(a2)+
 	or.l d1,(a1)+
-	or.l d1,(a2)+
+;	or.l d1,(a2)+
 	or.l d2,(a1)+
-	or.l d2,(a2)+
+;	or.l d2,(a2)+
 	or.l d3,(a1)+
-	or.l d3,(a2)+
+;	or.l d3,(a2)+
 	or.l d4,(a1)+
-	or.l d4,(a2)+
+;	or.l d4,(a2)+
 	or.l d5,(a1)+
-	or.l d5,(a2)+
+;	or.l d5,(a2)+
 	or.l d6,(a1)+
-	or.l d6,(a2)+
+;	or.l d6,(a2)+
 	or.l d7,(a1)+
-	or.l d7,(a2)+
+;	or.l d7,(a2)+
 ;	endr
 
 	lea 160-(8*4)(a1),a1
-	lea 160-(8*4)(a2),a2
+;	lea 160-(8*4)(a2),a2
 	endr
 
 ; Birthday
 	move.l screen1_ptr,a1
-	move.l screen2_ptr,a2
+;	move.l screen2_ptr,a2
 
 	moveq #0,d0
 	moveq #0,d1
 
+	sub.l #1,a5
 	move.b (a5),d1		; y
 	sub.l #1,a5
 	move.b (a5),d0		; x
-	sub.l #1,a5
 
 ; y*160 = y * 2^7 + 32*y => y<<7 + y<<5
 	lsl.w #5,d1
 	add.w d1,a1
-	add.w d1,a2
+;	add.w d1,a2
 	lsl.w #2,d1
 	add.w d1,a1
-	add.w d1,a2
+;	add.w d1,a2
 
 ; x
 	move.l d0,d2
@@ -419,7 +431,7 @@ lissajous_ok:
 ; d2-th word
 
 	add.l d2,a1
-	add.l d2,a2
+;	add.l d2,a2
 
 ; x-th bit
 
@@ -428,17 +440,47 @@ lissajous_ok:
 
 	andi.b #15,d0
 
-	lea birthday,a3		; 16 words = 8 registers
+	lea birthday,a0
+
+; sprite offset = d0 * 640 = 1<<7 + 1<<9
+	move.l d0,d1
+	lsl.l #7,d0
+	add.l d1,d1
+	lsl.l #8,d1
+	add.l d1,d0
+	add.l d0,a0
 
 	rept 16
-	rept 8
-	move.l (a3)+,d0
-	or.l d0,(a1)+
-	or.l d0,(a2)+
-	endr
+;	rept 10
+;	move.l (a0)+,d0
+	movem.l (a0)+,d0-d7
 
-	lea.l 160-(8*4)(a1),a1
-	lea.l 160-(8*4)(a2),a2
+	or.l d0,(a1)+
+;	or.l d0,(a2)+
+	or.l d1,(a1)+
+;	or.l d1,(a2)+
+	or.l d2,(a1)+
+;	or.l d2,(a2)+
+	or.l d3,(a1)+
+;	or.l d3,(a2)+
+	or.l d4,(a1)+
+;	or.l d4,(a2)+
+	or.l d5,(a1)+
+;	or.l d5,(a2)+
+	or.l d6,(a1)+
+;	or.l d6,(a2)+
+	or.l d7,(a1)+
+;	or.l d7,(a2)+
+
+	movem.l (a0)+,d0-d1
+	or.l d0,(a1)+
+;	or.l d0,(a2)+
+	or.l d1,(a1)+
+;	or.l d1,(a2)+
+;	endr
+
+	lea.l 160-(10*4)(a1),a1
+;	lea.l 160-(10*4)(a2),a2
 	endr
 
 	movem.l (sp)+,d0-d7/a0-a3
@@ -448,8 +490,12 @@ lissajous_ok:
 
 ; ---
 	wait_for_vbl
+;	swap_buffers
 
-	swap_buffers
+	move.l	screen1_ptr,d0
+	lsr.w	#8,d0
+	move.l	d0,$ff8200
+
 
 	tst d6
 	beq again
@@ -516,8 +562,12 @@ _screen1:		ds.b 32000
 _screen2:		ds.b 32000
 
 ;	align 2
-screen1_ptr:		even ds.l 1
-screen2_ptr:		ds.l 1
+;screen1_ptr:		even ds.l 1
+
+	align 2
+screen1_ptr:		ds.l 1
+
+;screen2_ptr:		ds.l 1
 previous_video_ptr:	ds.l 1
 previous_palette:	ds.w 16
 previous_video_mode:	ds.b 1
@@ -530,8 +580,8 @@ palette:		incbin "assets\palette.pal"
 lissajous_table:	incbin "assets\table.bin"
 lissajous_table_end:
 
-happy:			incbin "assets\happys.raw"
-birthday:		incbin "assets\birthday.raw"
+happy:			incbin "assets\happy.spr"
+birthday:		incbin "assets\birthday.spr"
 
 sine_tbl:
 		dc.w 0

@@ -6,17 +6,17 @@
 
 import struct
 
-f = open('happy.raw', 'rb')
+f = open('birthday.raw', 'rb')
 data = f.read()
 f.close()
 
 # in bytes
-DATA_WIDTH = (48//16)*8
+DATA_WIDTH = (64//16)*8
 
 # in bytes
-SPRITE_WIDTH = (64//16)*8
+SPRITE_WIDTH = ((64+16)//16)*8
 
-f = open('happys.raw', 'wb')
+f = open('birthdays.raw', 'wb')
 
 s = []
 

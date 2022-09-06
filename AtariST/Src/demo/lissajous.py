@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python3.9
 
 import math
 import curses
@@ -12,10 +12,10 @@ k = 0
 
 table = bytearray()
 
-for _ in range(632 * 2):
+for _ in range(631 * 2):
     table.append(0)
 
-while j < 632:
+while j < 631:
 #while True:
 #    stdscr.clear()
 
