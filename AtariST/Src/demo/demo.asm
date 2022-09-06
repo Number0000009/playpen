@@ -252,6 +252,7 @@ scroll_down:
 scroll_direction_set:
 
 	update_bgnd
+	wait_for_vbl
 
 blitter_busy:
 
