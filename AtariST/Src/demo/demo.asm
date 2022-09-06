@@ -29,24 +29,51 @@ skew:			equ $ff8a3d	; source shift
 ; Outputs:
 ; None
 ; Corrupts:
+; d0
 ; BLiTTER counters
 update_bgnd	MACRO
+		move.l screen_ptr,d0
+		add.l #(4*2),d0
 		move.l d0,dst_addr
 		move.l d4,src_addr
 		move.w d5,lines_per_block
-		move.b #%10000000,line_num	; run (BUSY)
+;		move.b #%10000000,line_num	; run (BUSY)
+
+;		move.b line_num,d0
+.blitter_busy:
+;		bset.b d0,line_num
+;		nop
+;		bne.s .blitter_busy
+
+		tas line_num
+		nop
+		bmi .blitter_busy
+
 		ENDM
 
 ; Inputs:
-; d0 = screen_ptr
 ; Outputs:
 ; None
 ; Corrupts:
-; d0
+; d0, d2
 swap_buffers	MACRO
-; Swap screen
-		lsr.w	#8,d0
-		move.l	d0,$ff8200
+		bchg #0,d2
+		beq .swap_screens
+
+		move.l screen1_ptr,d0
+		lsr.w #8,d0
+		move.l d0,$ff8200
+
+		move.l screen2_ptr,screen_ptr
+		bra.s .swap_end
+.swap_screens:
+
+		move.l screen2_ptr,d0
+		lsr.w #8,d0
+		move.l d0,$ff8200
+
+		move.l screen1_ptr,screen_ptr
+.swap_end:
 		ENDM
 
 ; Inputs:
@@ -54,27 +81,21 @@ swap_buffers	MACRO
 ; Outputs:
 ; None
 ; Corrupts:
-; d0
+; None
 wait_for_vbl	MACRO
 ; wait for VBL
 
 ; Ummask interupts
-;		move.w	#$2300,sr
+		move.w #$2300,sr
 
-		move.w	#0,$466
+		move.w #0,$466
 \@
 		tst.w $466.w
-		beq.s	\@
+		beq.s \@
 		move.w #0,$466
 
-
-;		move.w $468.w,d7
-;\@
-;		cmp.w $468.w,d7
-;		beq.s	\@
-
 ; Mask interrupts
-;		move.w	#$2700,sr
+		move.w #$2700,sr
 
 		ENDM
 
@@ -105,13 +126,9 @@ wait_for_vbl	MACRO
 	clr.b	d0
 	move.l	d0,screen1_ptr
 
-;	lsr.w	#8,d0
-;	move.l	d0,$ff8200
-
-
-;	move.l	#_screen2,d0
-;	clr.b	d0
-;	move.l	d0,screen2_ptr
+	move.l	#_screen2,d0
+	clr.b	d0
+	move.l	d0,screen2_ptr
 
 ; Disable cursor
 	move.w	#0,-(sp)		; not needed
@@ -136,7 +153,7 @@ wait_for_vbl	MACRO
 	move.l	#vbl,$70.w		; steal VBL
 
 ; Unmask interrupts
-	move.w	#$2300,sr
+;	move.w	#$2300,sr
 
 ; Get video mode and store it for lated
 	move.b	$ff8260,previous_video_mode
@@ -165,10 +182,6 @@ wait_for_vbl	MACRO
 	move.w (a0)+,(a1)+
 	endr
 
-	move.l screen1_ptr,d0
-	lsr.w #8,d0
-	move.l d0,$ff8200
-
 ; -- main loop
 
 ; Setup BLiTTER
@@ -190,7 +203,7 @@ wait_for_vbl	MACRO
 
 ; -------------
 
-;	moveq #0,d2			; back buffer or front buffer
+	moveq #0,d2			; back buffer or front buffer
 	moveq #0,d1			; scrolling up or down
 
 	move.l #bitmap,d4
@@ -198,6 +211,8 @@ wait_for_vbl	MACRO
 ; setup Lissajous table
 	lea lissajous_table,a6
 	lea lissajous_table_end,a5
+
+	swap_buffers			; init screen_ptr
 
 again:
 
@@ -212,24 +227,14 @@ again:
 	bchg #0,d1
 
 main_loop:
-blitter_busy:
-
-	tas line_num
-	nop
-	bmi blitter_busy
+;blitter_busy:
+;	tas line_num
+;	nop
+;	bmi blitter_busy
 
 	move.l #200,d5			; lines per block
 
-;	bchg #0,d2
-;	beq swap_addr
-
-;	move.l screen2_ptr,d0
-;	bra.s swap_exit
-;swap_addr:
-	move.l screen1_ptr,d0
-;swap_exit:
-
-	add.l #(4*2),d0
+	move.l screen_ptr,d0
 
 ; get_sine
 	move.w (a0)+,d3
@@ -253,10 +258,8 @@ scroll_direction_set:
 	move.l a5,-(sp)
 
 ; --- prepare sides pointers
-	move.l screen1_ptr,a1
-;	move.l screen2_ptr,a2
+	move.l screen_ptr,a1
 	lea (320/2-8)+(199*160)(a1),a4
-;	lea (320/2-8)+(199*160)(a2),a5
 	lea bitmap,a3
 	lea (320/2-8)(a3),a3
 ; ---
@@ -270,12 +273,7 @@ scroll_direction_set:
 
 	add.w #160,side_y
 	add.l d5,a1
-;	add.l d5,a2
 	add.l d5,a3
-;	move.l (a3),(a1)+
-;	move.l (a3)+,(a2)+
-;	move.l (a3),(a1)+
-;	move.l (a3),(a2)+
 
 	move.l (a3)+,(a1)+
 	move.l (a3),(a1)+
@@ -284,11 +282,6 @@ scroll_direction_set:
 	lea -4(a3),a3
 
 	sub.l d5,a4
-;	sub.l d5,a5
-;	move.l (a3),(a4)+
-;	move.l (a3)+,(a5)+
-;	move.l (a3),(a4)+
-;	move.l (a3),(a5)+
 
 	move.l (a3)+,(a4)+
 	move.l (a3),(a4)+
@@ -298,8 +291,6 @@ sides_finished:
 
 	move.l (sp)+,a5
 
-; ---
-;	swap_buffers
 ; ---
 ; Lissajous
 
@@ -321,8 +312,7 @@ sides_finished:
 
 lissajous_ok:
 
-	move.l screen1_ptr,a1
-;	move.l screen2_ptr,a2
+	move.l screen_ptr,a1
 
 	moveq #0,d0
 	moveq #0,d1
@@ -335,10 +325,8 @@ lissajous_ok:
 ; y*160 = y * 2^7 + 32*y => y<<7 + y<<5
 	lsl.w #5,d1
 	add.w d1,a1
-;	add.w d1,a2
 	lsl.w #2,d1
 	add.w d1,a1
-;	add.w d1,a2
 
 ; x
 	move.l d0,d2
@@ -350,7 +338,6 @@ lissajous_ok:
 ; d2-th word
 
 	add.l d2,a1
-;	add.l d2,a2
 
 ; x-th bit
 
@@ -359,8 +346,7 @@ lissajous_ok:
 
 	andi.b #15,d0
 
-; a1, screen1
-; a2, screen2
+; a1, screen_ptr
 ; d0 - 0-16 bits shifted to the right
 
 ; draw shifted sprite
@@ -371,39 +357,29 @@ lissajous_ok:
 	lsl.l #8,d0
 	add.l d0,a0
 
+; make sure BLiTTER has finished by now
+	wait_for_vbl
+	wait_for_vbl
+
+
 ;64//16*2 longs
 
 	rept 16
-;	rept 8
-;	move.l (a0)+,d0
-;	or.l d0,(a1)+
-;	or.l d0,(a2)+
 	movem.l (a0)+,d0-d7
 	or.l d0,(a1)+
-;	or.l d0,(a2)+
 	or.l d1,(a1)+
-;	or.l d1,(a2)+
 	or.l d2,(a1)+
-;	or.l d2,(a2)+
 	or.l d3,(a1)+
-;	or.l d3,(a2)+
 	or.l d4,(a1)+
-;	or.l d4,(a2)+
 	or.l d5,(a1)+
-;	or.l d5,(a2)+
 	or.l d6,(a1)+
-;	or.l d6,(a2)+
 	or.l d7,(a1)+
-;	or.l d7,(a2)+
-;	endr
 
 	lea 160-(8*4)(a1),a1
-;	lea 160-(8*4)(a2),a2
 	endr
 
 ; Birthday
-	move.l screen1_ptr,a1
-;	move.l screen2_ptr,a2
+	move.l screen_ptr,a1
 
 	moveq #0,d0
 	moveq #0,d1
@@ -416,10 +392,8 @@ lissajous_ok:
 ; y*160 = y * 2^7 + 32*y => y<<7 + y<<5
 	lsl.w #5,d1
 	add.w d1,a1
-;	add.w d1,a2
 	lsl.w #2,d1
 	add.w d1,a1
-;	add.w d1,a2
 
 ; x
 	move.l d0,d2
@@ -431,7 +405,6 @@ lissajous_ok:
 ; d2-th word
 
 	add.l d2,a1
-;	add.l d2,a2
 
 ; x-th bit
 
@@ -451,58 +424,42 @@ lissajous_ok:
 	add.l d0,a0
 
 	rept 16
-;	rept 10
-;	move.l (a0)+,d0
 	movem.l (a0)+,d0-d7
 
 	or.l d0,(a1)+
-;	or.l d0,(a2)+
 	or.l d1,(a1)+
-;	or.l d1,(a2)+
 	or.l d2,(a1)+
-;	or.l d2,(a2)+
 	or.l d3,(a1)+
-;	or.l d3,(a2)+
 	or.l d4,(a1)+
-;	or.l d4,(a2)+
 	or.l d5,(a1)+
-;	or.l d5,(a2)+
 	or.l d6,(a1)+
-;	or.l d6,(a2)+
 	or.l d7,(a1)+
-;	or.l d7,(a2)+
 
 	movem.l (a0)+,d0-d1
 	or.l d0,(a1)+
-;	or.l d0,(a2)+
 	or.l d1,(a1)+
-;	or.l d1,(a2)+
-;	endr
 
 	lea.l 160-(10*4)(a1),a1
-;	lea.l 160-(10*4)(a2),a2
 	endr
 
 	movem.l (sp)+,d0-d7/a0-a3
 
-; Unmask interrupts
-	move.w	#$2300,sr
-
 ; ---
-	wait_for_vbl
-;	swap_buffers
+; Unmask interrupts
+;	move.w	#$2300,sr
 
-	move.l	screen1_ptr,d0
-	lsr.w	#8,d0
-	move.l	d0,$ff8200
+;	wait_for_vbl
+	swap_buffers
 
+; Wait for a key
+;	move.w #7,-(sp)
+;	trap #1
+;	addq.l #2,sp
 
 	tst d6
 	beq again
 	sub.l #1,d6
 	beq again
-
-	wait_for_vbl
 
 ; check space key
 	cmp.b #$39,$fffc02
@@ -566,8 +523,8 @@ _screen2:		ds.b 32000
 
 	align 2
 screen1_ptr:		ds.l 1
-
-;screen2_ptr:		ds.l 1
+screen2_ptr:		ds.l 1
+screen_ptr:			ds.l 1
 previous_video_ptr:	ds.l 1
 previous_palette:	ds.w 16
 previous_video_mode:	ds.b 1
