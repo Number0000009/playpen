@@ -291,10 +291,10 @@ sides_finished:
 
 ; Lissajous
 
-; corrupts d0, d1, d2, d3, a1, a0, a1, a2, a3
+; corrupts d0-d7, a1, a0, a1, a2, a3
 
-; save d0, d1, d2, d3, a0, a1, a2, a3
-	movem.l d0-d3/a0-a3,-(sp)
+; save d0-d7, a0, a1, a2, a3
+	movem.l d0-d7/a0-a3,-(sp)
 
 	add.w #1,(lissajous_pos)
 	cmp.w #631,(lissajous_pos)
@@ -352,24 +352,41 @@ lissajous_ok:
 ; d0 - 0-16 bits shifted to the right
 
 ; draw shifted sprite
-;	lea happy_spr,a0		; 48+16 pixels width => 4 words of 16 bits
-	lea happy,a0		; 48 pixels width
+	lea happy,a0		; 48+16 pixels width => 4 words of 16 bits
 
-;;64//16*2 longs
-; 48//16*2 longs
+; sprite offset = d0 * 512
+	add.l d0,d0
+	lsl.l #8,d0
+	add.l d0,a0
+
+;64//16*2 longs
 
 	rept 16
-	rept 6
 ;	rept 8
-	move.l (a0)+,d0
+;	move.l (a0)+,d0
+;	or.l d0,(a1)+
+;	or.l d0,(a2)+
+	movem.l (a0)+,d0-d7
 	or.l d0,(a1)+
 	or.l d0,(a2)+
-	endr
+	or.l d1,(a1)+
+	or.l d1,(a2)+
+	or.l d2,(a1)+
+	or.l d2,(a2)+
+	or.l d3,(a1)+
+	or.l d3,(a2)+
+	or.l d4,(a1)+
+	or.l d4,(a2)+
+	or.l d5,(a1)+
+	or.l d5,(a2)+
+	or.l d6,(a1)+
+	or.l d6,(a2)+
+	or.l d7,(a1)+
+	or.l d7,(a2)+
+;	endr
 
-	lea 160-(6*4)(a1),a1
-	lea 160-(6*4)(a2),a2
-;	lea 160-(8*4)(a1),a1
-;	lea 160-(8*4)(a2),a2
+	lea 160-(8*4)(a1),a1
+	lea 160-(8*4)(a2),a2
 	endr
 
 ; Birthday
@@ -424,7 +441,7 @@ lissajous_ok:
 	lea.l 160-(8*4)(a2),a2
 	endr
 
-	movem.l (sp)+,d0-d3/a0-a3
+	movem.l (sp)+,d0-d7/a0-a3
 
 ; Unmask interrupts
 	move.w	#$2300,sr
@@ -504,9 +521,6 @@ screen2_ptr:		ds.l 1
 previous_video_ptr:	ds.l 1
 previous_palette:	ds.w 16
 previous_video_mode:	ds.b 1
-;	.align 2
-happy_spr:		even ds.b (48+16)*384
-birthday_spr:		ds.b (64+16)*512
 
 	SECTION DATA
 bitmap:			incbin "assets\top.raw"
@@ -516,29 +530,7 @@ palette:		incbin "assets\palette.pal"
 lissajous_table:	incbin "assets\table.bin"
 lissajous_table_end:
 
-happy:			incbin "assets\happy.raw"
-;happy:			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-;			dc.w $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa, $aaaa
-
+happy:			incbin "assets\happys.raw"
 birthday:		incbin "assets\birthday.raw"
 
 sine_tbl:
@@ -609,5 +601,5 @@ sine_tbl:
 		dc.w 0
 		dc.w 0
 
-side_y:			dc.w 0
-lissajous_pos:		dc.w 0
+side_y:		dc.w 0
+lissajous_pos:	dc.w 0
