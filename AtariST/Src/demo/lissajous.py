@@ -20,7 +20,7 @@ while j < 631:
 #    stdscr.clear()
 
     i += 0.01
-    x = int(math.sin(i*5 + 3.14/2)*70 + 100)
+    x = int(math.sin(i*5 + 3.14/2)*70 + 125)
     y = int(math.cos(i*6)*60 + 100)
 
     print(x)

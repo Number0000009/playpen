@@ -293,7 +293,7 @@ sides_finished:
 	movem.l d0-d7/a0-a3,-(sp)
 
 	add.w #1,(lissajous_pos)
-	cmp.w #631,(lissajous_pos)	; stop position
+	cmp.w #630,(lissajous_pos)	; stop position
 	ble lissajous_ok
 
 ; re-init lissajous
