@@ -32,22 +32,32 @@ skew:			equ $ff8a3d	; source shift
 ; d0
 ; BLiTTER counters
 update_bgnd	MACRO
+
+;.blitter_busy:
+;		bset.b d0,line_num
+;		nop
+;		bne.s .blitter_busy
+
+;		tas line_num
+;		nop
+;		bmi .blitter_busy
+
 		move.l screen_ptr,d0
 		add.l #(4*2),d0
 		move.l d0,dst_addr
 		move.l d4,src_addr
 		move.w d5,lines_per_block
-;		move.b #%10000000,line_num	; run (BUSY)
+		move.b #%10000000,line_num	; run (BUSY)
 
 ;		move.b line_num,d0
-.blitter_busy:
+;.blitter_busy:
 ;		bset.b d0,line_num
 ;		nop
 ;		bne.s .blitter_busy
 
-		tas line_num
-		nop
-		bmi .blitter_busy
+;		tas line_num
+;		nop
+;		bmi .blitter_busy
 
 		ENDM
 
@@ -86,7 +96,7 @@ wait_for_vbl	MACRO
 ; wait for VBL
 
 ; Ummask interupts
-		move.w #$2300,sr
+;		move.w #$2300,sr
 
 		move.w #0,$466
 \@
@@ -95,7 +105,7 @@ wait_for_vbl	MACRO
 		move.w #0,$466
 
 ; Mask interrupts
-		move.w #$2700,sr
+;		move.w #$2700,sr
 
 		ENDM
 
@@ -152,6 +162,9 @@ wait_for_vbl	MACRO
 
 ;	move.l $70.w,oldvbl			; store old VBL
 	move.l #vbl,$70.w			; steal VBL
+
+; Unask interrupts
+	move.w #$2300,sr
 
 ; Get video mode and store it for lated
 	move.b $ff8260,previous_video_mode
@@ -239,6 +252,16 @@ scroll_down:
 scroll_direction_set:
 
 	update_bgnd
+
+blitter_busy:
+
+	tas line_num
+	nop
+	bmi blitter_busy
+
+;	wait_for_vbl
+;	wait_for_vbl
+;	wait_for_vbl
 
 ; --- draw sides
 
@@ -351,8 +374,9 @@ lissajous_ok:
 	add.l d0,a0
 
 ; make sure BLiTTER has finished by now
-	wait_for_vbl
-	wait_for_vbl
+;	wait_for_vbl
+;	wait_for_vbl
+;	wait_for_vbl
 
 ;64//16*2 longs
 
@@ -439,6 +463,7 @@ lissajous_ok:
 ; ---
 ;	wait_for_vbl
 	swap_buffers
+	wait_for_vbl
 
 ; Wait for a key
 ;	move.w #7,-(sp)
@@ -449,6 +474,8 @@ lissajous_ok:
 	beq again
 	subq.l #1,d6
 	beq again
+
+;	wait_for_vbl
 
 ; check space key
 	cmp.b #$39,$fffc02
