@@ -104,74 +104,72 @@ wait_for_vbl	MACRO
 	SECTION TEXT
 
 ; TODO: wtf is this memory mumbo-jumbo?
-	move.l	4(sp),a5			; address to basepage
-	move.l	$0c(a5),d0		; length of text segment
-	add.l	$14(a5),d0		; length of data segment
-	add.l	$1c(a5),d0		; length of bss segment
-	add.l	#$1000,d0		; length of stackpointer
-	add.l	#$100,d0		; length of basepage
-	move.l	a5,d1			; address to basepage
-	add.l	d0,d1			; end of program
-	and.l	#-2,d1			; make address even
-	move.l	d1,sp			; new stackspace
+	move.l 4(sp),a5			; address to basepage
+	move.l $0c(a5),d0		; length of text segment
+	add.l $14(a5),d0		; length of data segment
+	add.l $1c(a5),d0		; length of bss segment
+	add.l #$1000,d0			; length of stackpointer
+	add.l #$100,d0			; length of basepage
+	move.l a5,d1			; address to basepage
+	add.l d0,d1			; end of program
+	and.l #-2,d1			; make address even
+	move.l d1,sp			; new stackspace
 
-	move.l	d0,-(sp)
-	move.l	a5,-(sp)
-	move.w	d0,-(sp)
-	move.w	#$4a,-(sp)		; mshrink
-	trap	#1
-	lea	12(sp),sp
+	move.l d0,-(sp)
+	move.l a5,-(sp)
+	move.w d0,-(sp)
+	move.w #$4a,-(sp)		; mshrink
+	trap #1
+	lea 12(sp),sp
 
-	move.l	#_screen1,d0
-	clr.b	d0
-	move.l	d0,screen1_ptr
+	move.l #_screen1,d0
+	clr.b d0
+	move.l d0,screen1_ptr
 
-	move.l	#_screen2,d0
-	clr.b	d0
-	move.l	d0,screen2_ptr
+	move.l #_screen2,d0
+	clr.b d0
+	move.l d0,screen2_ptr
 
 ; Disable cursor
-	move.w	#0,-(sp)		; not needed
-	move.w	#0,-(sp)		; disable cursor
-	move.w	#21,-(sp)
-	trap	#14
-	addq.l	#6,sp
+	clr.w -(sp)				; not needed ?
+	clr.w -(sp)				; disable cursor
+
+	move.w #21,-(sp)
+	trap #14
+	addq.l #6,sp
 
 ; Enter SUPER mode
-	clr.l	-(sp)
-	move.w	#32,-(sp)
-	trap	#1
-	addq.l	#6,sp
+	clr.l -(sp)
+	move.w #32,-(sp)
+	trap #1
+	addq.l #6,sp
 
 ; Init music
-	bsr	music
+	bsr music
 
 ; Mask interrupts
-	move.w	#$2700,sr
+	move.w #$2700,sr
 
-;	move.l	$70.w,oldvbl		; store old VBL
-	move.l	#vbl,$70.w		; steal VBL
-
-; Unmask interrupts
-;	move.w	#$2300,sr
+;	move.l $70.w,oldvbl			; store old VBL
+	move.l #vbl,$70.w			; steal VBL
 
 ; Get video mode and store it for lated
-	move.b	$ff8260,previous_video_mode
+	move.b $ff8260,previous_video_mode
 
 ; Read vram address (low byte is zero on the STE) and store it for later
-	move.l	$ff8200,previous_video_ptr
+	move.l $ff8200,previous_video_ptr
 
 ; Save palette
-	move.l	#$ff8240,a0
-	lea	previous_palette,a1
-	rept	7			; 16/2 - 1
-	move.l	(a0)+,(a1)+
+	move.l #$ff8240,a0
+	lea previous_palette,a1
+	rept 7					; 16/2 - 1
+	move.l (a0)+,(a1)+
 	endr
 
 	wait_for_vbl
 
 ; Set 320x200x4 bitplanes mode
-	clr.b	$ff8260
+	clr.b $ff8260
 
 	wait_for_vbl
 
@@ -195,7 +193,7 @@ wait_for_vbl	MACRO
 	move.w #2,dst_x_inc		; offset to the next word in bytes
 	move.w #(9*2),dst_y_inc		; offset from the last word to the first words in bytes
 
-	move.w #72,words_per_line_count
+	move.w #72,words_per_line_count	; full scanline (320 pixels) is 80 words
 
 	move.b #2,hop			; source
 	move.b #3,op			; source
@@ -215,9 +213,6 @@ wait_for_vbl	MACRO
 	swap_buffers			; init screen_ptr
 
 again:
-
-; Mask interrupts
-	move.w #$2700,sr
 
 ; setup sine table
 	lea sine_tbl,a0
@@ -298,7 +293,7 @@ sides_finished:
 	movem.l d0-d7/a0-a3,-(sp)
 
 	add.w #1,(lissajous_pos)
-	cmp.w #631,(lissajous_pos)
+	cmp.w #631,(lissajous_pos)	; stop position
 	ble lissajous_ok
 
 ; re-init lissajous
@@ -316,9 +311,9 @@ lissajous_ok:
 	moveq #0,d1
 
 	move.b (a6),d0		; x
-	add.l #1,a6
+	addq.l #1,a6
 	move.b (a6),d1		; y
-	add.l #1,a6
+	addq.l #1,a6
 
 ; y*160 = y * 2^7 + 32*y => y<<7 + y<<5
 	lsl.w #5,d1
@@ -381,9 +376,9 @@ lissajous_ok:
 	moveq #0,d0
 	moveq #0,d1
 
-	sub.l #1,a5
+	subq.l #1,a5
 	move.b (a5),d1		; y
-	sub.l #1,a5
+	subq.l #1,a5
 	move.b (a5),d0		; x
 
 ; y*160 = y * 2^7 + 32*y => y<<7 + y<<5
@@ -442,9 +437,6 @@ lissajous_ok:
 	movem.l (sp)+,d0-d7/a0-a3
 
 ; ---
-; Unmask interrupts
-;	move.w	#$2300,sr
-
 ;	wait_for_vbl
 	swap_buffers
 
@@ -455,7 +447,7 @@ lissajous_ok:
 
 	tst d6
 	beq again
-	sub.l #1,d6
+	subq.l #1,d6
 	beq again
 
 ; check space key
@@ -497,7 +489,7 @@ vbl:
 ; Unmask interrupts
 ;	move.w #$2300,sr
 
-	bsr	music+8			; call music
+	bsr music+8			; call music
 ;	move.l oldvbl(pc),-(sp)		; go to old vector
 	addq.w #1,$466.w
 
@@ -506,7 +498,7 @@ vbl:
 
 	rte
 
-;oldvbl:			ds.l 1
+;oldvbl:		ds.l 1
 
 music:			incbin "assets\music.snd"
 
@@ -521,7 +513,7 @@ _screen2:		ds.b 32000
 	align 2
 screen1_ptr:		ds.l 1
 screen2_ptr:		ds.l 1
-screen_ptr:			ds.l 1
+screen_ptr:		ds.l 1
 previous_video_ptr:	ds.l 1
 previous_palette:	ds.w 16
 previous_video_mode:	ds.b 1
@@ -538,72 +530,72 @@ happy:			incbin "assets\happy.spr"
 birthday:		incbin "assets\birthday.spr"
 
 sine_tbl:
-		dc.w 0
-		dc.w 0
-		dc.w 0
-		dc.w 0
-		dc.w 160
-		dc.w 160
-		dc.w 160
-		dc.w 160
-		dc.w 320
-		dc.w 320
-		dc.w 320
-		dc.w 320
-		dc.w 320
-		dc.w 480
-		dc.w 480
-		dc.w 480
-		dc.w 480
-		dc.w 480
-		dc.w 640
-		dc.w 640
-		dc.w 640
-		dc.w 640
-		dc.w 640
-		dc.w 640
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 800
-		dc.w 640
-		dc.w 640
-		dc.w 640
-		dc.w 640
-		dc.w 640
-		dc.w 640
-		dc.w 480
-		dc.w 480
-		dc.w 480
-		dc.w 480
-		dc.w 480
-		dc.w 320
-		dc.w 320
-		dc.w 320
-		dc.w 320
-		dc.w 160
-		dc.w 160
-		dc.w 160
-		dc.w 160
-		dc.w 0
-		dc.w 0
-		dc.w 0
-		dc.w 0
+			dc.w 0
+			dc.w 0
+			dc.w 0
+			dc.w 0
+			dc.w 160
+			dc.w 160
+			dc.w 160
+			dc.w 160
+			dc.w 320
+			dc.w 320
+			dc.w 320
+			dc.w 320
+			dc.w 320
+			dc.w 480
+			dc.w 480
+			dc.w 480
+			dc.w 480
+			dc.w 480
+			dc.w 640
+			dc.w 640
+			dc.w 640
+			dc.w 640
+			dc.w 640
+			dc.w 640
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 800
+			dc.w 640
+			dc.w 640
+			dc.w 640
+			dc.w 640
+			dc.w 640
+			dc.w 640
+			dc.w 480
+			dc.w 480
+			dc.w 480
+			dc.w 480
+			dc.w 480
+			dc.w 320
+			dc.w 320
+			dc.w 320
+			dc.w 320
+			dc.w 160
+			dc.w 160
+			dc.w 160
+			dc.w 160
+			dc.w 0
+			dc.w 0
+			dc.w 0
+			dc.w 0
 
-side_y:		dc.w 0
-lissajous_pos:	dc.w 0
+side_y:			dc.w 0
+lissajous_pos:		dc.w 0
