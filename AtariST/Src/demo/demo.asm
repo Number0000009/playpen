@@ -217,7 +217,7 @@ wait_for_vbl	MACRO
 again:
 
 ; Mask interrupts
-;	move.w #$2700,sr
+	move.w #$2700,sr
 
 ; setup sine table
 	lea sine_tbl,a0
@@ -227,11 +227,6 @@ again:
 	bchg #0,d1
 
 main_loop:
-;blitter_busy:
-;	tas line_num
-;	nop
-;	bmi blitter_busy
-
 	move.l #200,d5			; lines per block
 
 	move.l screen_ptr,d0
@@ -252,14 +247,13 @@ scroll_direction_set:
 
 ; --- draw sides
 
-; Mask interrupts
-	move.w #$2700,sr
-
 	move.l a5,-(sp)
 
 ; --- prepare sides pointers
-	move.l screen_ptr,a1
+	move.l screen1_ptr,a1
+	move.l screen2_ptr,a2
 	lea (320/2-8)+(199*160)(a1),a4
+	lea (320/2-8)+(199*160)(a2),a5
 	lea bitmap,a3
 	lea (320/2-8)(a3),a3
 ; ---
@@ -272,23 +266,27 @@ scroll_direction_set:
 	beq.s sides_finished
 
 	add.w #160,side_y
-	add.l d5,a1
 	add.l d5,a3
+	add.l d5,a1
+	add.l d5,a2
 
-	move.l (a3)+,(a1)+
 	move.l (a3),(a1)+
+	move.l (a3)+,(a2)+
+	move.l (a3),(a1)+
+	move.l (a3),(a2)+
 
 ; Right side
 	lea -4(a3),a3
 
 	sub.l d5,a4
+	sub.l d5,a5
 
-	move.l (a3)+,(a4)+
 	move.l (a3),(a4)+
-
+	move.l (a3)+,(a5)+
+	move.l (a3),(a4)+
+	move.l (a3),(a5)+
 
 sides_finished:
-
 	move.l (sp)+,a5
 
 ; ---
@@ -360,7 +358,6 @@ lissajous_ok:
 ; make sure BLiTTER has finished by now
 	wait_for_vbl
 	wait_for_vbl
-
 
 ;64//16*2 longs
 
