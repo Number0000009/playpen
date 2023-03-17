@@ -1,0 +1,26 @@
+https://github.com/ipxe/ipxe.git
+make CROSS_COMPILE=aarch64-linux-gnu- ARCH=arm64 bin-arm64-efi/ipxe.efi -j8 EMBED=/tmp/script.ipxe
+
+script.ipxe:
+#!ipxe
+
+echo "hello from script.ipxe"
+dhcp
+chain --autofree http://10.2.79.51:8000/hello
+Or tftp with tftp-hpa:
+
+/etc/default/tftpd-hpa:
+TFTP_USERNAME="tftp"
+TFTP_DIRECTORY="/tmp"
+TFTP_ADDRESS=":69"
+TFTP_OPTIONS="--secure --verbose"
+
+python3 -m http.server
+hello:
+#!ipxe
+
+echo hello
+
+uefi shell:
+fs2:\efi\boot\ipxe.efi
+
