@@ -47,18 +47,41 @@ MAIN_LOOP:
         JMP MAIN_LOOP       ; Infinite loop (interrupts handle updates)
 
 ; Interrupt Service Routine (ISR)
+;ISR:
+;        PHA                 ; preserve A (add TXA/PHX/PHY if you use X/Y)
+;        LDA VIA_T1CL        ; ack T1 (clears flag)
+;
+;        INC COUNTER
+;        LDA COUNTER
+;        CLC
+;        ADC #$30
+;        STA SCREEN_BASE
+;
+;        PLA
+;        RTI
+
 ISR:
-        PHA                 ; preserve A (add TXA/PHX/PHY if you use X/Y)
-        LDA VIA_T1CL        ; ack T1 (clears flag)
+        PHA
+        LDA VIA_T1CL        ; ack T1
+
+        INC TICK
+        LDA TICK
+        AND #$0F            ; every 16th tick (~1.0 s)
+        BNE SKIP
 
         INC COUNTER
         LDA COUNTER
+        AND #$0F            ; keep it readable 0..15
         CLC
         ADC #$30
         STA SCREEN_BASE
 
+SKIP:
         PLA
         RTI
 
+TICK:
+.byte 0
+
 COUNTER:
-.byte $00
+.byte 0
