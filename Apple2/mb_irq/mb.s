@@ -18,15 +18,6 @@ START:
         LDA $C081           ; Switch writable RAM over ROM
         LDA $C081           ; Repeat for stability
 
-        ; Copy ROM contents into RAM at $F800-$FFFF
-        LDY #$00            ; Initialize index register
-COPY_LOOP:
-        LDA $F800,Y         ; Load byte from ROM
-        STA $F800,Y         ; Store byte into RAM
-        INY                 ; Increment index
-        CPY #$80            ; Check if done (256 bytes per page)
-        BNE COPY_LOOP       ; Repeat until done
-
         LDA $C083
         LDA $C083
 
@@ -36,22 +27,29 @@ COPY_LOOP:
         LDA #>ISR           ; High byte of ISR address
         STA $FFFF           ; Store at IRQ vector high byte
 
-;        CLI                 ; Enable interrupts
+        ; Copy ROM contents into RAM at $F800-$FFFF
+        LDY #$00            ; Initialize index register
+COPY_LOOP:
+        LDA $F800,Y         ; Load byte from ROM
+        STA $F800,Y         ; Store byte into RAM
+        INY                 ; Increment index
+        CPY #$80            ; Check if done (256 bytes per page)
+        BNE COPY_LOOP       ; Repeat until done
 
         ; Initialize Mockingboard VIA Timer
         LDA #$40            ; Set T1 to continuous mode (bit 6)
         STA VIA_ACR         ; Write to Auxiliary Control Register
 
-        LDA #$FF            ; Set Timer 1 high byte (frequency divisor)
-        STA VIA_T1CH
-
         LDA #$00            ; Set Timer 1 low byte (frequency divisor)
         STA VIA_T1CL
+        LDA #$FF            ; Set Timer 1 high byte (frequency divisor)
+        STA VIA_T1CH
 
         LDA #$82            ; Enable Timer 1 interrupt (bit 7 + bit 1)
         STA VIA_IER         ; Write to Interrupt Enable Register
 
-        CLI
+        CLI                 ; Enable interrupts
+
 MAIN_LOOP:
         JMP MAIN_LOOP       ; Infinite loop (interrupts handle updates)
 
