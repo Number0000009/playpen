@@ -27,25 +27,18 @@ START:
         LDA #>ISR           ; High byte of ISR address
         STA $FFFF           ; Store at IRQ vector high byte
 
-        ; Copy ROM contents into RAM at $F800-$FFFF
-        LDY #$00            ; Initialize index register
-COPY_LOOP:
-        LDA $F800,Y         ; Load byte from ROM
-        STA $F800,Y         ; Store byte into RAM
-        INY                 ; Increment index
-        CPY #$80            ; Check if done (256 bytes per page)
-        BNE COPY_LOOP       ; Repeat until done
-
         ; Initialize Mockingboard VIA Timer
         LDA #$40            ; Set T1 to continuous mode (bit 6)
         STA VIA_ACR         ; Write to Auxiliary Control Register
 
-        LDA #$00            ; Set Timer 1 low byte (frequency divisor)
+        LDA #$FF            ; Set Timer 1 low byte (frequency divisor)
         STA VIA_T1CL
         LDA #$FF            ; Set Timer 1 high byte (frequency divisor)
         STA VIA_T1CH
 
-        LDA #$82            ; Enable Timer 1 interrupt (bit 7 + bit 1)
+        LDA VIA_T1CL        ; Clear Timer 1 Interrupt Flag
+
+        LDA #$C0            ; Enable Timer 1 interrupt (bit 7 + bit 6)
         STA VIA_IER         ; Write to Interrupt Enable Register
 
         CLI                 ; Enable interrupts
@@ -55,16 +48,16 @@ MAIN_LOOP:
 
 ; Interrupt Service Routine (ISR)
 ISR:
-        SEI
-        INC COUNTER         ; Increment counter
+        PHA                 ; preserve A (add TXA/PHX/PHY if you use X/Y)
+        LDA VIA_T1CL        ; ack T1 (clears flag)
 
-        LDA COUNTER         ; Load counter value into A
-        CLC                 ; Convert binary to ASCII
-        ADC #$30            ; Add ASCII '0'
+        INC COUNTER
+        LDA COUNTER
+        CLC
+        ADC #$30
+        STA SCREEN_BASE
 
-CHECK_ZERO:
-        STA SCREEN_BASE     ; Display it at top left.
-        CLI
+        PLA
         RTI
 
 COUNTER:
